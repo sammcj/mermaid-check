@@ -1,0 +1,21 @@
+flowchart TB
+    subgraph "Agent Deployment Options"
+        Lambda[Lambda<br/>Stateless, event-driven agents]
+        ACRuntime[AgentCore Runtime<br/>Interactive, streaming agents]
+    end
+
+    subgraph "MCP Server Hosting - Always Persistent"
+        ECS[ECS/Fargate<br/>Most common, cost-effective]
+        ACRuntimeMCP[AgentCore Runtime<br/>With integrated features]
+    end
+
+    Lambda -.->|calls| ECS
+    Lambda -.->|calls| ACRuntimeMCP
+    ACRuntime -.->|calls| ECS
+    ACRuntime -.->|calls| ACRuntimeMCP
+
+    classDef agent fill:#E8F5E8,stroke:#27AE60,color:#27AE60
+    classDef mcp fill:#F0E6FF,stroke:#8E44AD,color:#8E44AD
+
+    class Lambda,ACRuntime agent
+    class ECS,ACRuntimeMCP mcp

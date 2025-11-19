@@ -1,0 +1,31 @@
+flowchart TB
+    subgraph "Agent Layer"
+        Agent[Strands Agent]
+    end
+
+    subgraph "AgentCore Runtime"
+        Runtime[AgentCore Runtime<br/>0.0.0.0:8000/mcp]
+        Session[Session Management<br/>MCP-Session-Id header]
+    end
+
+    subgraph "MCP Server Container"
+        MCP[FastMCP Server<br/>Streamable HTTP Mode]
+        Tools[MCP Tools<br/>calculator, search, etc.]
+    end
+
+    Agent -->|ConverseStream API| Runtime
+    Runtime -->|HTTP Streaming<br/>Accept: application/json,<br/>text/event-stream| MCP
+    MCP --> Tools
+    Tools -->|Real-time Events| MCP
+    MCP -->|Event Stream| Runtime
+    Runtime -->|Streamed Response| Agent
+
+    Session -.->|Maintains Isolation| Runtime
+
+    classDef llm fill:#E8F5E8,stroke:#27AE60,color:#27AE60
+    classDef components fill:#F0E6FF,stroke:#8E44AD,color:#8E44AD
+    classDef api fill:#FFF0E6,stroke:#E67E22,color:#E67E22
+
+    class Agent llm
+    class Runtime,Session,MCP components
+    class Tools api

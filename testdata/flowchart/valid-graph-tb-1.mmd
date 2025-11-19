@@ -1,0 +1,16 @@
+graph TB
+    subgraph "Swarm Pattern - Autonomous Coordination"
+        S1[Researcher Agent] <-->|shared context| S2[Writer Agent]
+        S2 <-->|shared context| S3[Reviewer Agent]
+        S3 <-->|shared context| S1
+        WM[(Working Memory)]
+        S1 --> WM
+        S2 --> WM
+        S3 --> WM
+    end
+
+    classDef llm fill:#E8F5E8,stroke:#27AE60,color:#27AE60
+    classDef storage fill:#F0E6FF,stroke:#8E44AD,color:#8E44AD
+
+    class S1,S2,S3 llm
+    class WM storage

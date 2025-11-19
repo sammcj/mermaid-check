@@ -1,0 +1,24 @@
+graph TB
+    subgraph "AgentCore Platform Services"
+        runtime[AgentCore Runtime<br/>Session isolation & long-running workloads]
+        gateway[AgentCore Gateway<br/>Unified tool access & MCP integration]
+        memory[AgentCore Memory<br/>Persistent cross-session knowledge]
+        identity[AgentCore Identity<br/>Secure AWS & 3rd-party access]
+        observability[AgentCore Observability<br/>CloudWatch monitoring & metrics]
+        browser[AgentCore Browser<br/>Managed web automation]
+        interpreter[AgentCore Code Interpreter<br/>Isolated code execution]
+    end
+
+    runtime --> gateway
+    runtime --> memory
+    runtime --> identity
+    runtime --> browser
+    runtime --> interpreter
+    observability --> runtime
+
+    classDef process fill:#E8F5E8,stroke:#27AE60,color:#27AE60
+    classDef components fill:#F0E6FF,stroke:#8E44AD,color:#8E44AD
+    classDef storage fill:#F0E6FF,stroke:#8E44AD,color:#8E44AD
+
+    class runtime,gateway,interpreter process
+    class memory,identity,browser,observability storage
