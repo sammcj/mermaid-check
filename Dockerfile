@@ -1,16 +1,30 @@
-FROM cgr.dev/chainguard/go:latest-dev as builder
+FROM --platform=$BUILDPLATFORM cgr.dev/chainguard/go:latest-dev AS builder
+
+ARG TARGETOS
+ARG TARGETARCH
+
 WORKDIR /work
 
-COPY go.mod /work/
-COPY cmd /work/cmd
-COPY internal /work/internal
+# Copy and download dependencies first for better caching
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
 
-RUN CGO_ENABLED=0 go build -o mermaid-check ./cmd
+# Build the binary with static linking
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
+    go build -ldflags="-s -w" -o mermaid-check ./cmd/mermaid-check
 
-# for static Go builds
-FROM cgr.dev/chainguard/static
-# for dynamic Go builds
-#FROM cgr.dev/chainguard/glibc-dynamic
-COPY --from=builder /work/mermaid-check /mermaid-check
+# Use the static Chainguard image for a minimal, secure, and distroless container
+FROM cgr.dev/chainguard/static:latest
 
-ENTRYPOINT ["/mermaid-check"]
+# Set labels for better maintainability
+LABEL org.opencontainers.image.source="https://github.com/sammcj/mermaid-check"
+LABEL org.opencontainers.image.description="A tool to check mermaid diagrams for common issues"
+LABEL org.opencontainers.image.licenses="MIT"
+
+COPY --from=builder /work/mermaid-check /usr/bin/mermaid-check
+
+# Use a non-root user (already provided by Chainguard images, but good for clarity)
+USER 65532:65532
+
+ENTRYPOINT ["/usr/bin/mermaid-check"]
