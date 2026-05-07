@@ -10,32 +10,32 @@ import (
 
 var (
 	// Sequence diagram patterns
-	seqHeaderPattern = regexp.MustCompile(`^sequenceDiagram\s*$`)
+	seqHeaderPattern  = regexp.MustCompile(`^sequenceDiagram\s*$`)
 	seqCommentPattern = regexp.MustCompile(`^%%(.*)$`)
 
 	// Participant patterns
 	participantPattern = regexp.MustCompile(`^(participant|actor)\s+(\w+)(?:\s+as\s+(.+))?$`)
 
 	// Activation patterns
-	activatePattern = regexp.MustCompile(`^activate\s+(\w+)$`)
+	activatePattern   = regexp.MustCompile(`^activate\s+(\w+)$`)
 	deactivatePattern = regexp.MustCompile(`^deactivate\s+(\w+)$`)
 
 	// Block patterns
-	loopPattern = regexp.MustCompile(`^loop\s+(.+)$`)
-	altPattern = regexp.MustCompile(`^alt\s+(.+)$`)
-	elsePattern = regexp.MustCompile(`^else(?:\s+(.+))?$`)
-	optPattern = regexp.MustCompile(`^opt\s+(.+)$`)
-	parPattern = regexp.MustCompile(`^par\s+(.+)$`)
-	andPattern = regexp.MustCompile(`^and(?:\s+(.+))?$`)
+	loopPattern     = regexp.MustCompile(`^loop\s+(.+)$`)
+	altPattern      = regexp.MustCompile(`^alt\s+(.+)$`)
+	elsePattern     = regexp.MustCompile(`^else(?:\s+(.+))?$`)
+	optPattern      = regexp.MustCompile(`^opt\s+(.+)$`)
+	parPattern      = regexp.MustCompile(`^par\s+(.+)$`)
+	andPattern      = regexp.MustCompile(`^and(?:\s+(.+))?$`)
 	criticalPattern = regexp.MustCompile(`^critical\s+(.+)$`)
-	optionPattern = regexp.MustCompile(`^option\s+(.+)$`)
-	breakPattern = regexp.MustCompile(`^break\s+(.+)$`)
-	endPattern = regexp.MustCompile(`^end\s*$`)
+	optionPattern   = regexp.MustCompile(`^option\s+(.+)$`)
+	breakPattern    = regexp.MustCompile(`^break\s+(.+)$`)
+	endPattern      = regexp.MustCompile(`^end\s*$`)
 
 	// Note patterns (case-insensitive to match Mermaid spec)
-	noteLeftPattern = regexp.MustCompile(`(?i)^note\s+left\s+of\s+(\w+)\s*:\s*(.+)$`)
+	noteLeftPattern  = regexp.MustCompile(`(?i)^note\s+left\s+of\s+(\w+)\s*:\s*(.+)$`)
 	noteRightPattern = regexp.MustCompile(`(?i)^note\s+right\s+of\s+(\w+)\s*:\s*(.+)$`)
-	noteOverPattern = regexp.MustCompile(`(?i)^note\s+over\s+([\w,\s]+)\s*:\s*(.+)$`)
+	noteOverPattern  = regexp.MustCompile(`(?i)^note\s+over\s+([\w,\s]+)\s*:\s*(.+)$`)
 
 	// Box pattern
 	boxPattern = regexp.MustCompile(`^box\s+(?:(\w+)\s+)?(.+)$`)
@@ -306,9 +306,9 @@ func (p *SequenceParser) parseMessage(line string, pos ast.Position) *ast.Messag
 	}
 
 	for _, arrow := range arrows {
-		if idx := strings.Index(line, arrow); idx != -1 {
-			from := strings.TrimSpace(line[:idx])
-			rest := strings.TrimSpace(line[idx+len(arrow):])
+		if before, after, ok := strings.Cut(line, arrow); ok {
+			from := strings.TrimSpace(before)
+			rest := strings.TrimSpace(after)
 
 			// Check for activation/deactivation markers
 			activate := strings.HasSuffix(rest, "+")

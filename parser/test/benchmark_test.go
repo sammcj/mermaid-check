@@ -1,6 +1,7 @@
 package parser_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/sammcj/mermaid-check/parser"
@@ -103,11 +104,12 @@ var (
 )
 
 func generateLargeFlowchart(nodes int) string {
-	diagram := "flowchart TD\n"
+	var diagram strings.Builder
+	diagram.WriteString("flowchart TD\n")
 	for i := range nodes {
-		diagram += "    Node" + string(rune('A'+i%26)) + string(rune('0'+i/26)) + " --> Node" + string(rune('A'+(i+1)%26)) + string(rune('0'+(i+1)/26)) + "\n"
+		diagram.WriteString("    Node" + string(rune('A'+i%26)) + string(rune('0'+i/26)) + " --> Node" + string(rune('A'+(i+1)%26)) + string(rune('0'+(i+1)/26)) + "\n")
 	}
-	return diagram
+	return diagram.String()
 }
 
 func BenchmarkParseFlowchart(b *testing.B) {

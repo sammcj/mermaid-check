@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/fatih/color"
 	mermaid "github.com/sammcj/mermaid-check"
@@ -30,11 +31,11 @@ var (
 func main() {
 	// Define flags
 	var (
-		strict        = flag.Bool("strict", false, "use strict validation rules")
-		formatFlag    = flag.String("format", "", "force input format (mermaid or markdown)")
-		errorOnEmpty  = flag.Bool("error-on-empty", false, "treat files with no Mermaid diagrams as errors")
-		showHelp      = flag.Bool("help", false, "show help message")
-		showVersion   = flag.Bool("version", false, "show version")
+		strict       = flag.Bool("strict", false, "use strict validation rules")
+		formatFlag   = flag.String("format", "", "force input format (mermaid or markdown)")
+		errorOnEmpty = flag.Bool("error-on-empty", false, "treat files with no Mermaid diagrams as errors")
+		showHelp     = flag.Bool("help", false, "show help message")
+		showVersion  = flag.Bool("version", false, "show version")
 	)
 
 	flag.Parse()
@@ -268,13 +269,13 @@ func processFiles(paths []string, strict bool, errorOnEmpty bool) int {
 
 		case inpututil.FileTypeMermaid:
 			// For .mmd files, check if content is empty or whitespace-only
-			trimmedContent := ""
+			var trimmedContent strings.Builder
 			for _, ch := range content {
 				if ch != ' ' && ch != '\t' && ch != '\n' && ch != '\r' {
-					trimmedContent += string(ch)
+					trimmedContent.WriteString(string(ch))
 				}
 			}
-			if trimmedContent == "" {
+			if trimmedContent.String() == "" {
 				result.resultType = resultNoDiagrams
 				result.errorMsg = "empty .mmd file"
 				results = append(results, result)
@@ -337,8 +338,8 @@ func processFiles(paths []string, strict bool, errorOnEmpty bool) int {
 
 func printGroupedResults(results []fileResult, errorOnEmpty bool) {
 	// Group results by type
-	noDiagramsInfo := make([]fileResult, 0)     // informational (markdown with no diagrams)
-	noDiagramsError := make([]fileResult, 0)    // errors (empty .mmd files)
+	noDiagramsInfo := make([]fileResult, 0)  // informational (markdown with no diagrams)
+	noDiagramsError := make([]fileResult, 0) // errors (empty .mmd files)
 	parseErrors := make([]fileResult, 0)
 	fileErrors := make([]fileResult, 0)
 	unsupported := make([]fileResult, 0)
@@ -488,16 +489,14 @@ func validateDiagram(diagram ast.Diagram, strict bool, prefix string) bool {
 }
 
 func containsCodeBlocks(content string) bool {
-	return len(content) > 10 && (
-		contains(content, "```mermaid") ||
+	return len(content) > 10 && (contains(content, "```mermaid") ||
 		contains(content, "```\nmermaid") ||
 		contains(content, "# ") || // Markdown heading
 		contains(content, "## "))
 }
 
 func containsMarkdownFences(content string) bool {
-	return len(content) > 10 && (
-		contains(content, "```mermaid") ||
+	return len(content) > 10 && (contains(content, "```mermaid") ||
 		contains(content, "~~~mermaid") ||
 		contains(content, "``` mermaid"))
 }
@@ -505,27 +504,27 @@ func containsMarkdownFences(content string) bool {
 // diagramTypeDisplayName returns a user-friendly display name for a diagram type.
 func diagramTypeDisplayName(diagType string) string {
 	displayNames := map[string]string{
-		"flowchart":        "Flowchart",
-		"graph":            "Flow Chart",
-		"sequence":         "Sequence Diagram",
-		"class":            "Class Diagram",
-		"state":            "State Diagram",
-		"stateDiagram-v2":  "State Diagram",
-		"er":               "ER Diagram",
-		"gantt":            "Gantt Chart",
-		"pie":              "Pie Chart",
-		"journey":          "User Journey",
-		"timeline":         "Timeline",
-		"gitGraph":         "Git Graph",
-		"mindmap":          "Mindmap",
-		"sankey":           "Sankey Diagram",
-		"quadrantChart":    "Quadrant Chart",
-		"xyChart":          "XY Chart",
-		"c4Context":        "C4 Context Diagram",
-		"c4Container":      "C4 Container Diagram",
-		"c4Component":      "C4 Component Diagram",
-		"c4Dynamic":        "C4 Dynamic Diagram",
-		"c4Deployment":     "C4 Deployment Diagram",
+		"flowchart":       "Flowchart",
+		"graph":           "Flow Chart",
+		"sequence":        "Sequence Diagram",
+		"class":           "Class Diagram",
+		"state":           "State Diagram",
+		"stateDiagram-v2": "State Diagram",
+		"er":              "ER Diagram",
+		"gantt":           "Gantt Chart",
+		"pie":             "Pie Chart",
+		"journey":         "User Journey",
+		"timeline":        "Timeline",
+		"gitGraph":        "Git Graph",
+		"mindmap":         "Mindmap",
+		"sankey":          "Sankey Diagram",
+		"quadrantChart":   "Quadrant Chart",
+		"xyChart":         "XY Chart",
+		"c4Context":       "C4 Context Diagram",
+		"c4Container":     "C4 Container Diagram",
+		"c4Component":     "C4 Component Diagram",
+		"c4Dynamic":       "C4 Dynamic Diagram",
+		"c4Deployment":    "C4 Deployment Diagram",
 	}
 
 	if displayName, ok := displayNames[diagType]; ok {
