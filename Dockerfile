@@ -1,7 +1,7 @@
 FROM --platform=$BUILDPLATFORM cgr.dev/chainguard/go:latest-dev AS builder
 
-ARG TARGETOS
-ARG TARGETARCH
+ARG TARGETOS=linux
+ARG TARGETARCH=amd64
 
 WORKDIR /work
 
