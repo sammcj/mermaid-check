@@ -20,7 +20,7 @@ FROM cgr.dev/chainguard/static:latest
 # Set labels for better maintainability
 LABEL org.opencontainers.image.source="https://github.com/sammcj/mermaid-check"
 LABEL org.opencontainers.image.description="A tool to check mermaid diagrams for common issues"
-LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.licenses="Apache-2.0"
 
 COPY --from=builder /work/mermaid-check /usr/bin/mermaid-check
 
