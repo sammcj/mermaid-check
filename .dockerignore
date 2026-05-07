@@ -1,0 +1,80 @@
+# ---------------------------
+# Git
+# ---------------------------
+.git
+.gitignore
+.gitattributes
+
+# ---------------------------
+# Go build output
+# ---------------------------
+bin/
+build/
+dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go test binaries / coverage
+*.test
+*.out
+coverage.*
+cover.out
+
+# ---------------------------
+# Go workspace / modules
+# ---------------------------
+vendor/  # Ignore if you use Go modules without vendoring
+# If the project uses vendoring, REMOVE this line
+
+# ---------------------------
+# Dependencies cache (local)
+# ---------------------------
+pkg/
+Godeps/
+.gopath
+
+# ---------------------------
+# Test files
+# ---------------------------
+testdata/
+*_test.go
+
+# ---------------------------
+# Logs / temp
+# ---------------------------
+*.log
+tmp/
+temp/
+.cache
+
+# ---------------------------
+# OS / editor
+# ---------------------------
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+*.swp
+
+# ---------------------------
+# Environment / secrets
+# ---------------------------
+.env
+.env.*
+!.env.example
+
+# ---------------------------
+# Docs / meta (optional)
+# ---------------------------
+docs/
+*.md
+CHANGELOG*
+LICENSE*
+
+# ---------------------------
+# CI/CD
+# ---------------------------
+.github/
