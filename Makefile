@@ -27,8 +27,8 @@ lint: ## Run golangci-lint on all packages
 	@golangci-lint run ./...
 	@echo "Linting complete"
 
-clean: ## Remove build artifacts
-	@echo "Cleaning build artifacts..."
+clean: ## Remove build artefacts
+	@echo "Cleaning build artefacts..."
 	@rm -f $(BUILD_DIR)/$(BINARY_NAME)
 	@rm -rf dist/
 	@echo "Clean complete"
