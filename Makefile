@@ -38,6 +38,13 @@ tidy: ## Tidy and verify module dependencies
 	@go mod tidy
 	@go mod verify
 
+deps: ## Update all dependencies and verify module dependencies
+	@echo "Updating Go dependencies..."
+	@go get -u ./...
+	@go mod verify
+	@go get -t -u ./...
+	@go mod verify
+
 coverage: ## Generate test coverage report with detailed statistics
 	@echo "Generating coverage report..."
 	@go test -coverpkg=./... -coverprofile=coverage.txt -covermode=atomic ./... 2>&1 | grep -E "coverage:|ok"
