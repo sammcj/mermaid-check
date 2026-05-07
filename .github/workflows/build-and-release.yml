@@ -29,7 +29,7 @@ jobs:
       contents: write
     steps:
       - name: Check out code
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -51,7 +51,7 @@ jobs:
     if: always() && (needs.bump-version.result == 'success' || needs.bump-version.result == 'skipped') && !contains(github.event.head_commit.message, '[skip-ci]')
     steps:
       - name: Check out code
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Extract Go version from go.mod
         id: go-version
@@ -127,7 +127,7 @@ jobs:
     if: always() && (needs.bump-version.result == 'success' || needs.bump-version.result == 'skipped') && github.event_name != 'pull_request' && !contains(github.event.head_commit.message, '[skip-ci]')
     steps:
       - name: Check out code
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Extract Go version from go.mod
         id: go-version
@@ -200,7 +200,7 @@ jobs:
     if: always() && (needs.bump-version.result == 'success' || needs.bump-version.result == 'skipped') && github.event_name != 'pull_request' && !contains(github.event.head_commit.message, '[skip-ci]')
     steps:
       - name: Check out code
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Extract Go version from go.mod
         id: go-version
@@ -278,7 +278,7 @@ jobs:
       contents: write
     steps:
       - name: Check out code
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
 
@@ -376,7 +376,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create Release
-        uses: softprops/action-gh-release@5be0e66d93ac7ed76da52eca8bb058f665c3a5fe # v2
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           name: Release v${{ steps.get_version.outputs.version }}
           body: |
