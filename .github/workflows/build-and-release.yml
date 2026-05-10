@@ -43,6 +43,7 @@ jobs:
           default_bump: patch
           tag_prefix: v
           create_annotated_tag: true
+          custom_release_rules: chore(deps):minor:Dependency Updates,deps:minor:Dependency Updates
 
   build-linux-amd64:
     name: Build Linux AMD64
