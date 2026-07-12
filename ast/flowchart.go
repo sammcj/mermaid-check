@@ -55,6 +55,7 @@ func (l *Link) GetPosition() Position { return l.Pos }
 
 // Subgraph represents a subgraph block.
 type Subgraph struct {
+	ID         string      // Subgraph id (empty for the quoted-title form, which has none)
 	Title      string      // Subgraph title
 	Statements []Statement // Nested statements
 	Pos        Position
