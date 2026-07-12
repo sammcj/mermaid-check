@@ -149,20 +149,18 @@ func (p *FlowchartParser) parseStatements(lines []string, startLine int, inSubgr
 				return nil, err
 			}
 
-			// Extract title from matches
-			// matches[1]: ID (if using ID[display] syntax)
-			// matches[2]: Display name in brackets (if using ID[display] syntax)
-			// matches[3]: Quoted name (if using "name" syntax)
+			// Extract the title from the first matching alternative:
+			//   matches[1], matches[2]: `id[display]` syntax (id, bracketed label)
+			//   matches[3]:             bare `id`
+			//   matches[4]:             quoted `"name"`
 			var title string
-			if matches[2] != "" {
-				// Use display name from brackets, strip quotes if present
+			switch {
+			case matches[2] != "":
 				title = strings.Trim(matches[2], `"`)
-			} else if matches[1] != "" {
-				// Use ID if no display name
-				title = matches[1]
-			} else if matches[3] != "" {
-				// Use quoted name
+			case matches[3] != "":
 				title = matches[3]
+			case matches[4] != "":
+				title = matches[4]
 			}
 
 			statements = append(statements, &ast.Subgraph{
