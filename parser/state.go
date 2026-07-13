@@ -16,6 +16,9 @@ var (
 	// State declaration patterns
 	stateDefPattern = regexp.MustCompile(`^state\s+"([^"]+)"\s+as\s+(\w+)\s*$`)
 
+	// Composite state opening: `state Foo {` or `state "Desc" as Foo {`.
+	stateCompositePattern = regexp.MustCompile(`^state\s+(?:"([^"]+)"\s+as\s+)?(\w+)\s*\{\s*$`)
+
 	// Transition patterns
 	transitionPattern = regexp.MustCompile(`^(\w+|\[\*\])\s+-->\s+(\w+|\[\*\])(?:\s*:\s*(.+))?\s*$`)
 
@@ -77,7 +80,7 @@ func (p *StateParser) parseStatements(lines []string, startLine int) []ast.State
 	var statements []ast.StateStmt
 	lineNum := startLine
 
-	for i := range lines {
+	for i := 0; i < len(lines); i++ {
 		lineNum++
 		line := lines[i]
 		trimmed := strings.TrimSpace(line)
@@ -120,6 +123,21 @@ func (p *StateParser) parseStatements(lines []string, startLine int) []ast.State
 				ID:  matches[1],
 				Pos: ast.Position{Line: lineNum, Column: 1},
 			})
+			continue
+		}
+
+		// Handle composite state: recurse into its `{ }` block.
+		if matches := stateCompositePattern.FindStringSubmatch(trimmed); matches != nil {
+			nested, consumed := extractBraceBlock(lines[i+1:])
+			statements = append(statements, &ast.State{
+				ID:          matches[2],
+				Description: matches[1],
+				IsComposite: true,
+				Nested:      p.parseStatements(nested, lineNum),
+				Pos:         ast.Position{Line: lineNum, Column: 1},
+			})
+			i += consumed
+			lineNum += consumed
 			continue
 		}
 
@@ -186,4 +204,26 @@ func (p *StateParser) parseStatements(lines []string, startLine int) []ast.State
 	}
 
 	return statements
+}
+
+// extractBraceBlock returns the lines inside a composite state's `{ }` block
+// (the opening line already consumed by the caller) and the number of lines
+// consumed including the closing `}`. Nested blocks are balanced by brace
+// depth so the inner lines can be re-parsed recursively.
+func extractBraceBlock(lines []string) ([]string, int) {
+	depth := 1
+	var inner []string
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "}" {
+			depth--
+			if depth == 0 {
+				return inner, i + 1
+			}
+		} else if strings.HasSuffix(trimmed, "{") {
+			depth++
+		}
+		inner = append(inner, line)
+	}
+	return inner, len(lines)
 }
