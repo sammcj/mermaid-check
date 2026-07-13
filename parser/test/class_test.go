@@ -1,6 +1,7 @@
 package parser_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/noamsto/mermaid-check/ast"
@@ -80,5 +81,52 @@ func TestClassParser_SupportedTypes(t *testing.T) {
 	types := p.SupportedTypes()
 	if len(types) != 1 || types[0] != "class" {
 		t.Errorf("SupportedTypes() = %v, want [\"class\"]", types)
+	}
+}
+
+func TestClassParser_Members(t *testing.T) {
+	src := "classDiagram\n" +
+		"    class Animal {\n" +
+		"        +String name\n" +
+		"        -int age\n" +
+		"        +makeSound(String kind) bool\n" +
+		"        +run()\n" +
+		"    }"
+	d, err := parser.NewClassParser().Parse(src)
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+	cd, ok := d.(*ast.ClassDiagram)
+	if !ok {
+		t.Fatalf("Parse() = %T, want *ast.ClassDiagram", d)
+	}
+	var class *ast.Class
+	for _, s := range cd.Statements {
+		if c, ok := s.(*ast.Class); ok {
+			class = c
+			break
+		}
+	}
+	if class == nil {
+		t.Fatal("no class statement found")
+	}
+
+	want := []ast.ClassMember{
+		{Visibility: "+", Name: "name", Type: "String", IsMethod: false},
+		{Visibility: "-", Name: "age", Type: "int", IsMethod: false},
+		{Visibility: "+", Name: "makeSound", Type: "bool", IsMethod: true, Parameters: []string{"String kind"}},
+		{Visibility: "+", Name: "run", Type: "", IsMethod: true},
+	}
+	if len(class.Members) != len(want) {
+		t.Fatalf("got %d members, want %d: %+v", len(class.Members), len(want), class.Members)
+	}
+	for i, w := range want {
+		g := class.Members[i]
+		if g.Visibility != w.Visibility || g.Name != w.Name || g.Type != w.Type || g.IsMethod != w.IsMethod {
+			t.Errorf("member %d = %+v, want vis=%q name=%q type=%q method=%v", i, g, w.Visibility, w.Name, w.Type, w.IsMethod)
+		}
+		if strings.Join(g.Parameters, ",") != strings.Join(w.Parameters, ",") {
+			t.Errorf("member %d params = %v, want %v", i, g.Parameters, w.Parameters)
+		}
 	}
 }

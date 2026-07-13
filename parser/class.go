@@ -18,8 +18,10 @@ var (
 	classBodyStartPattern = regexp.MustCompile(`^class\s+(\w+)(?:\s*<<(.+)>>)?\s*\{\s*$`)
 	classBodyEndPattern = regexp.MustCompile(`^\}\s*$`)
 
-	// Member patterns
-	memberPattern = regexp.MustCompile(`^([+\-#~])(\w+)(?:\(([^)]*)\))?(?:\s+(.+))?\s*$`)
+	// Member patterns. Group 3 captures the whole parameter list including its
+	// parentheses, so an empty `()` still marks a method (distinct from an
+	// attribute, which has no parens).
+	memberPattern = regexp.MustCompile(`^([+\-#~])(\w+)(\([^)]*\))?(?:\s+(.+))?\s*$`)
 
 	// Relationship patterns
 	// Inheritance: --|>, <|--
@@ -211,31 +213,39 @@ func (p *ClassParser) parseClassBody(lines []string, startLine int) ([]ast.Class
 
 		// Parse member
 		if matches := memberPattern.FindStringSubmatch(trimmed); matches != nil {
-			visibility := matches[1]
-			name := matches[2]
-			params := matches[3]
-			typ := ""
+			ident := matches[2]
+			parens := matches[3] // "", "()", or "(args)"
+			rest := ""
 			if len(matches) > 4 {
-				typ = matches[4]
+				rest = strings.TrimSpace(matches[4])
 			}
 
 			member := ast.ClassMember{
-				Visibility: visibility,
-				Name:       name,
-				Type:       typ,
-				IsMethod:   params != "",
+				Visibility: matches[1],
+				IsMethod:   parens != "",
 				Pos:        ast.Position{Line: lineNum, Column: 1},
 			}
 
-			if params != "" {
-				// Parse parameters
-				if params != "" {
-					paramList := strings.Split(params, ",")
+			switch {
+			case member.IsMethod:
+				// methodName(params) returnType
+				member.Name = ident
+				member.Type = rest
+				inner := strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(parens, "("), ")"))
+				if inner != "" {
+					paramList := strings.Split(inner, ",")
 					for i := range paramList {
 						paramList[i] = strings.TrimSpace(paramList[i])
 					}
 					member.Parameters = paramList
 				}
+			case rest != "":
+				// attribute written "type name"
+				member.Type = ident
+				member.Name = rest
+			default:
+				// attribute with only a name
+				member.Name = ident
 			}
 
 			members = append(members, member)
