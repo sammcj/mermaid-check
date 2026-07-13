@@ -16,6 +16,12 @@ var (
 	// State declaration patterns
 	stateDefPattern = regexp.MustCompile(`^state\s+"([^"]+)"\s+as\s+(\w+)\s*$`)
 
+	// Composite state patterns (a state containing nested statements).
+	// Both `state Name {` and `state "Description" as Name {` are supported.
+	compositeStartPattern     = regexp.MustCompile(`^state\s+(\w+)\s*\{\s*$`)
+	compositeStartDescPattern = regexp.MustCompile(`^state\s+"([^"]+)"\s+as\s+(\w+)\s*\{\s*$`)
+	stateBodyEndPattern       = regexp.MustCompile(`^\}\s*$`)
+
 	// Transition patterns
 	transitionPattern = regexp.MustCompile(`^(\w+|\[\*\])\s+-->\s+(\w+|\[\*\])(?:\s*:\s*(.+))?\s*$`)
 
@@ -77,7 +83,7 @@ func (p *StateParser) parseStatements(lines []string, startLine int) []ast.State
 	var statements []ast.StateStmt
 	lineNum := startLine
 
-	for i := range lines {
+	for i := 0; i < len(lines); i++ {
 		lineNum++
 		line := lines[i]
 		trimmed := strings.TrimSpace(line)
@@ -93,6 +99,14 @@ func (p *StateParser) parseStatements(lines []string, startLine int) []ast.State
 				Text: strings.TrimSpace(matches[1]),
 				Pos:  ast.Position{Line: lineNum, Column: 1},
 			})
+			continue
+		}
+
+		// Handle composite states (a state containing nested statements).
+		if state, consumed := p.parseComposite(trimmed, lines[i+1:], lineNum); state != nil {
+			statements = append(statements, state)
+			i += consumed
+			lineNum += consumed
 			continue
 		}
 
@@ -186,4 +200,55 @@ func (p *StateParser) parseStatements(lines []string, startLine int) []ast.State
 	}
 
 	return statements
+}
+
+// parseComposite parses a composite state (`state Name {` ... `}`), returning the
+// resulting State and the number of lines consumed after the opening line
+// (including the closing brace). It returns nil, 0 when the header line does not
+// open a composite state.
+func (p *StateParser) parseComposite(header string, rest []string, headerLine int) (*ast.State, int) {
+	var id, description string
+	switch {
+	case compositeStartDescPattern.MatchString(header):
+		m := compositeStartDescPattern.FindStringSubmatch(header)
+		description, id = m[1], m[2]
+	case compositeStartPattern.MatchString(header):
+		id = compositeStartPattern.FindStringSubmatch(header)[1]
+	default:
+		return nil, 0
+	}
+
+	// Find the matching closing brace, accounting for nested composite states.
+	depth := 1
+	end := -1
+	for j, line := range rest {
+		trimmed := strings.TrimSpace(line)
+		switch {
+		case compositeStartPattern.MatchString(trimmed), compositeStartDescPattern.MatchString(trimmed):
+			depth++
+		case stateBodyEndPattern.MatchString(trimmed):
+			depth--
+			if depth == 0 {
+				end = j
+			}
+		}
+		if end >= 0 {
+			break
+		}
+	}
+
+	if end < 0 {
+		// Unclosed composite state: treat the remainder as its body.
+		end = len(rest)
+	}
+
+	nested := p.parseStatements(rest[:end], headerLine)
+
+	return &ast.State{
+		ID:          id,
+		Description: description,
+		IsComposite: true,
+		Nested:      nested,
+		Pos:         ast.Position{Line: headerLine, Column: 1},
+	}, end + 1
 }

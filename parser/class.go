@@ -10,13 +10,13 @@ import (
 
 var (
 	// Class diagram patterns
-	classHeaderPattern = regexp.MustCompile(`^classDiagram\s*$`)
+	classHeaderPattern  = regexp.MustCompile(`^classDiagram\s*$`)
 	classCommentPattern = regexp.MustCompile(`^%%(.*)$`)
 
 	// Class declaration patterns
-	classDeclPattern = regexp.MustCompile(`^class\s+(\w+)(?:\s*<<(.+)>>)?\s*$`)
+	classDeclPattern      = regexp.MustCompile(`^class\s+(\w+)(?:\s*<<(.+)>>)?\s*$`)
 	classBodyStartPattern = regexp.MustCompile(`^class\s+(\w+)(?:\s*<<(.+)>>)?\s*\{\s*$`)
-	classBodyEndPattern = regexp.MustCompile(`^\}\s*$`)
+	classBodyEndPattern   = regexp.MustCompile(`^\}\s*$`)
 
 	// Member patterns
 	memberPattern = regexp.MustCompile(`^([+\-#~])(\w+)(?:\(([^)]*)\))?(?:\s+(.+))?\s*$`)
@@ -28,7 +28,9 @@ var (
 	// Association: --, -->
 	// Dependency: .., ..>, <..
 	// Realization: ..|>, <|..
-	relationshipPattern = regexp.MustCompile(`^(\w+)\s+(?:"([^"]+)"\s+)?([<*o])?(-{2}|\.{2})([>|*o]?)\s+(?:"([^"]+)"\s+)?(\w+)(?:\s*:\s*(.+))?\s*$`)
+	// Left arrowheads can be two characters (`<|`), so must be matched before the
+	// single-character forms; the same applies to the right arrowhead (`|>`).
+	relationshipPattern = regexp.MustCompile(`^(\w+)\s+(?:"([^"]+)"\s+)?(<\|?|\*|o)?(-{2}|\.{2})(\|?>|\*|o)?\s+(?:"([^"]+)"\s+)?(\w+)(?:\s*:\s*(.+))?\s*$`)
 
 	// Note pattern
 	classNotePattern = regexp.MustCompile(`^note\s+for\s+(\w+)\s+"([^"]+)"\s*$`)
@@ -212,23 +214,30 @@ func (p *ClassParser) parseClassBody(lines []string, startLine int) ([]ast.Class
 		// Parse member
 		if matches := memberPattern.FindStringSubmatch(trimmed); matches != nil {
 			visibility := matches[1]
-			name := matches[2]
+			firstToken := matches[2]
 			params := matches[3]
-			typ := ""
+			rest := ""
 			if len(matches) > 4 {
-				typ = matches[4]
+				rest = matches[4]
 			}
+
+			// A member is a method when it carries parentheses. The parameter
+			// capture group is empty for both `foo()` and a plain attribute, so
+			// detect the parentheses directly.
+			isMethod := strings.Contains(trimmed, "(")
 
 			member := ast.ClassMember{
 				Visibility: visibility,
-				Name:       name,
-				Type:       typ,
-				IsMethod:   params != "",
+				IsMethod:   isMethod,
 				Pos:        ast.Position{Line: lineNum, Column: 1},
 			}
 
-			if params != "" {
-				// Parse parameters
+			switch {
+			case isMethod:
+				// `+name(params) returnType` — the leading token is the name and
+				// any trailing token is the return type.
+				member.Name = firstToken
+				member.Type = rest
 				if params != "" {
 					paramList := strings.Split(params, ",")
 					for i := range paramList {
@@ -236,6 +245,13 @@ func (p *ClassParser) parseClassBody(lines []string, startLine int) ([]ast.Class
 					}
 					member.Parameters = paramList
 				}
+			case rest != "":
+				// Attribute written as `+type name`; Mermaid lists the type first.
+				member.Type = firstToken
+				member.Name = rest
+			default:
+				// Attribute written as `+name` with no explicit type.
+				member.Name = firstToken
 			}
 
 			members = append(members, member)
