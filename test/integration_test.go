@@ -127,6 +127,19 @@ func TestInvalidClassDiagram(t *testing.T) {
 	}
 }
 
+// TestValidClassDiagramWithStandaloneNote tests that a standalone note passes default validation.
+func TestValidClassDiagramWithStandaloneNote(t *testing.T) {
+	source := "classDiagram\n    class Animal\n    note \"a floating note\""
+	diagram, err := mermaid.Parse(source)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	errors := mermaid.Validate(diagram, false)
+	if len(errors) > 0 {
+		t.Errorf("Unexpected validation errors: %v", errors)
+	}
+}
+
 // TestValidStateDiagram tests a valid state diagram.
 func TestValidStateDiagram(t *testing.T) {
 	// Note: State diagrams require explicit state definitions before transitions
