@@ -76,6 +76,9 @@ func (r *ValidClassReferences) ValidateClass(diagram *ast.ClassDiagram) []Valida
 	// Check notes
 	for _, stmt := range diagram.Statements {
 		if note, ok := stmt.(*ast.ClassNote); ok {
+			if note.ClassName == "" {
+				continue // standalone note; no class reference to check
+			}
 			if !definedClasses[note.ClassName] {
 				errors = append(errors, ValidationError{
 					Line:     note.Pos.Line,

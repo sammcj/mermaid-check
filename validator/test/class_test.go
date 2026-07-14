@@ -81,6 +81,27 @@ func TestValidClassReferences(t *testing.T) {
 			wantErrors: 1,
 		},
 		{
+			name: "standalone note needs no class reference",
+			diagram: &ast.ClassDiagram{
+				Type: "class",
+				Statements: []ast.ClassStmt{
+					&ast.ClassNote{ClassName: "", Text: "a floating note", Pos: ast.Position{Line: 2, Column: 1}},
+				},
+			},
+			wantErrors: 0,
+		},
+		{
+			name: "targeted note still errors on undefined class alongside a standalone note",
+			diagram: &ast.ClassDiagram{
+				Type: "class",
+				Statements: []ast.ClassStmt{
+					&ast.ClassNote{ClassName: "", Text: "a floating note", Pos: ast.Position{Line: 2, Column: 1}},
+					&ast.ClassNote{ClassName: "UndefinedClass", Text: "Note text", Pos: ast.Position{Line: 3, Column: 1}},
+				},
+			},
+			wantErrors: 1,
+		},
+		{
 			name: "implicit class from relationship",
 			diagram: &ast.ClassDiagram{
 				Type: "class",
