@@ -125,6 +125,39 @@ func TestClassParser_Relationships(t *testing.T) {
 	}
 }
 
+func TestClassParser_Notes(t *testing.T) {
+	src := "classDiagram\n" +
+		"    note for Animal \"An animal note\"\n" +
+		"    note \"a floating note\""
+	d, err := parser.NewClassParser().Parse(src)
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+	cd, ok := d.(*ast.ClassDiagram)
+	if !ok {
+		t.Fatalf("Parse() = %T, want *ast.ClassDiagram", d)
+	}
+	var notes []*ast.ClassNote
+	for _, s := range cd.Statements {
+		if n, ok := s.(*ast.ClassNote); ok {
+			notes = append(notes, n)
+		}
+	}
+	want := []ast.ClassNote{
+		{ClassName: "Animal", Text: "An animal note"},
+		{ClassName: "", Text: "a floating note"},
+	}
+	if len(notes) != len(want) {
+		t.Fatalf("got %d notes, want %d: %+v", len(notes), len(want), notes)
+	}
+	for i, w := range want {
+		g := notes[i]
+		if g.ClassName != w.ClassName || g.Text != w.Text {
+			t.Errorf("note %d = {ClassName:%q Text:%q}, want {ClassName:%q Text:%q}", i, g.ClassName, g.Text, w.ClassName, w.Text)
+		}
+	}
+}
+
 func TestClassParser_Members(t *testing.T) {
 	src := "classDiagram\n" +
 		"    class Animal {\n" +
