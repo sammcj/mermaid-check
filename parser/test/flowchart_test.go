@@ -75,3 +75,41 @@ func TestParseTestDataFiles(t *testing.T) {
 		})
 	}
 }
+
+func TestParseSubgraphTitle(t *testing.T) {
+	p := parser.NewFlowchartParser()
+	tests := []struct {
+		name string
+		src  string
+		want string
+	}{
+		{"id with bracket label", "flowchart TD\n subgraph one[Group One]\n a --> b\n end", "Group One"},
+		{"bare id", "flowchart TD\n subgraph one\n a --> b\n end", "one"},
+		{"quoted title", "flowchart TD\n subgraph \"My Group\"\n a --> b\n end", "My Group"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d, err := p.Parse(tt.src)
+			if err != nil {
+				t.Fatalf("Parse error: %v", err)
+			}
+			fc, ok := d.(*ast.Flowchart)
+			if !ok {
+				t.Fatalf("expected *ast.Flowchart, got %T", d)
+			}
+			var sg *ast.Subgraph
+			for _, s := range fc.Statements {
+				if g, ok := s.(*ast.Subgraph); ok {
+					sg = g
+					break
+				}
+			}
+			if sg == nil {
+				t.Fatal("no subgraph statement found")
+			}
+			if sg.Title != tt.want {
+				t.Errorf("subgraph title = %q, want %q", sg.Title, tt.want)
+			}
+		})
+	}
+}

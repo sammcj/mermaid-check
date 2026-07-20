@@ -25,6 +25,7 @@
 //
 // # Supported Diagram Types
 //
-// Currently supports flowchart and graph diagrams. Additional diagram types
-// (sequence, ER, class, state, gantt, pie, etc.) will be added in future releases.
+// Parsing covers flowchart, graph, sequence, class, state, ER, gantt, pie,
+// journey, timeline, gitGraph, mindmap, sankey, quadrant, xychart, and the C4
+// diagram types.
 package mermaid
