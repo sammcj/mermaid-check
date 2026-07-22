@@ -79,13 +79,14 @@ func TestParseTestDataFiles(t *testing.T) {
 func TestParseSubgraphTitle(t *testing.T) {
 	p := parser.NewFlowchartParser()
 	tests := []struct {
-		name string
-		src  string
-		want string
+		name   string
+		src    string
+		want   string
+		wantID string
 	}{
-		{"id with bracket label", "flowchart TD\n subgraph one[Group One]\n a --> b\n end", "Group One"},
-		{"bare id", "flowchart TD\n subgraph one\n a --> b\n end", "one"},
-		{"quoted title", "flowchart TD\n subgraph \"My Group\"\n a --> b\n end", "My Group"},
+		{"id with bracket label", "flowchart TD\n subgraph one[Group One]\n a --> b\n end", "Group One", "one"},
+		{"bare id", "flowchart TD\n subgraph one\n a --> b\n end", "one", "one"},
+		{"quoted title", "flowchart TD\n subgraph \"My Group\"\n a --> b\n end", "My Group", ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -109,6 +110,9 @@ func TestParseSubgraphTitle(t *testing.T) {
 			}
 			if sg.Title != tt.want {
 				t.Errorf("subgraph title = %q, want %q", sg.Title, tt.want)
+			}
+			if sg.ID != tt.wantID {
+				t.Errorf("subgraph id = %q, want %q", sg.ID, tt.wantID)
 			}
 		})
 	}
