@@ -30,8 +30,11 @@ var (
 	// Realization: ..|>, <|..
 	relationshipPattern = regexp.MustCompile(`^(\w+)\s+(?:"([^"]+)"\s+)?([<*o])?(-{2}|\.{2})([>|*o]?)\s+(?:"([^"]+)"\s+)?(\w+)(?:\s*:\s*(.+))?\s*$`)
 
-	// Note pattern
-	classNotePattern = regexp.MustCompile(`^note\s+for\s+(\w+)\s+"([^"]+)"\s*$`)
+	// Note patterns. classNotePattern (targeted) is tried before
+	// classStandaloneNotePattern so a "note for X ..." line is never
+	// misread as a floating note.
+	classNotePattern           = regexp.MustCompile(`^note\s+for\s+(\w+)\s+"([^"]+)"\s*$`)
+	classStandaloneNotePattern = regexp.MustCompile(`^note\s+"([^"]+)"\s*$`)
 )
 
 // ClassParser parses Mermaid class diagrams.
@@ -179,6 +182,16 @@ func (p *ClassParser) parseStatements(lines []string, startLine int) ([]ast.Clas
 				ClassName: matches[1],
 				Text:      matches[2],
 				Pos:       ast.Position{Line: lineNum, Column: 1},
+			}
+			statements = append(statements, note)
+			continue
+		}
+
+		// Handle standalone (floating) notes with no target class
+		if matches := classStandaloneNotePattern.FindStringSubmatch(trimmed); matches != nil {
+			note := &ast.ClassNote{
+				Text: matches[1],
+				Pos:  ast.Position{Line: lineNum, Column: 1},
 			}
 			statements = append(statements, note)
 			continue

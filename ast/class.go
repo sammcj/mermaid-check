@@ -58,9 +58,9 @@ func (r *Relationship) classStmt() {}
 // GetPosition returns the position in source.
 func (r *Relationship) GetPosition() Position { return r.Pos }
 
-// ClassNote represents a note attached to a class.
+// ClassNote represents a note, optionally attached to a class.
 type ClassNote struct {
-	ClassName string   // Class the note is attached to
+	ClassName string   // Class the note is attached to; empty for a standalone/floating note
 	Text      string   // Note text
 	Pos       Position
 }
