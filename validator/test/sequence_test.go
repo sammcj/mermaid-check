@@ -216,7 +216,7 @@ func TestSequenceValidatorWithLoopAndAlt(t *testing.T) {
 						},
 					},
 					{
-						Label: "else",
+						Label:  "else",
 						IsElse: true,
 						Statements: []ast.SeqStmt{
 							&ast.Message{From: "System", To: "User", Arrow: "->>", Text: "Error", Pos: ast.Position{Line: 11, Column: 1}},

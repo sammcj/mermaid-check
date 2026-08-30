@@ -45,8 +45,8 @@ func TestParseC4Deployment(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "empty diagram",
-			source: `C4Deployment`,
+			name:    "empty diagram",
+			source:  `C4Deployment`,
 			wantErr: false,
 		},
 	}

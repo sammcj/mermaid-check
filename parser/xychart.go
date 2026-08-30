@@ -18,14 +18,14 @@ func NewXYChartParser() *XYChartParser {
 }
 
 var (
-	xyChartHeaderRegex      = regexp.MustCompile(`^xychart-beta\s*(horizontal|vertical)?\s*$`)
-	xyChartTitleRegex       = regexp.MustCompile(`^\s*title\s+"([^"]+)"\s*$`)
-	xyChartXAxisCatRegex    = regexp.MustCompile(`^\s*x-axis\s+\[(.+)\]\s*$`)
-	xyChartYAxisCatRegex    = regexp.MustCompile(`^\s*y-axis\s+\[(.+)\]\s*$`)
-	xyChartXAxisNumRegex    = regexp.MustCompile(`^\s*x-axis\s+"([^"]+)"\s+(-?[0-9]+(?:\.[0-9]+)?)\s+-->\s+(-?[0-9]+(?:\.[0-9]+)?)\s*$`)
-	xyChartYAxisNumRegex    = regexp.MustCompile(`^\s*y-axis\s+"([^"]+)"\s+(-?[0-9]+(?:\.[0-9]+)?)\s+-->\s+(-?[0-9]+(?:\.[0-9]+)?)\s*$`)
-	xyChartBarSeriesRegex   = regexp.MustCompile(`^\s*bar\s+\[(.+)\]\s*$`)
-	xyChartLineSeriesRegex  = regexp.MustCompile(`^\s*line\s+\[(.+)\]\s*$`)
+	xyChartHeaderRegex     = regexp.MustCompile(`^xychart-beta\s*(horizontal|vertical)?\s*$`)
+	xyChartTitleRegex      = regexp.MustCompile(`^\s*title\s+"([^"]+)"\s*$`)
+	xyChartXAxisCatRegex   = regexp.MustCompile(`^\s*x-axis\s+\[(.+)\]\s*$`)
+	xyChartYAxisCatRegex   = regexp.MustCompile(`^\s*y-axis\s+\[(.+)\]\s*$`)
+	xyChartXAxisNumRegex   = regexp.MustCompile(`^\s*x-axis\s+"([^"]+)"\s+(-?[0-9]+(?:\.[0-9]+)?)\s+-->\s+(-?[0-9]+(?:\.[0-9]+)?)\s*$`)
+	xyChartYAxisNumRegex   = regexp.MustCompile(`^\s*y-axis\s+"([^"]+)"\s+(-?[0-9]+(?:\.[0-9]+)?)\s+-->\s+(-?[0-9]+(?:\.[0-9]+)?)\s*$`)
+	xyChartBarSeriesRegex  = regexp.MustCompile(`^\s*bar\s+\[(.+)\]\s*$`)
+	xyChartLineSeriesRegex = regexp.MustCompile(`^\s*line\s+\[(.+)\]\s*$`)
 )
 
 // Parse parses an XY chart diagram source.

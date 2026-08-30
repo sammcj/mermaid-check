@@ -42,7 +42,7 @@ func ExtractFromMarkdown(markdown string) ([]DiagramBlock, error) {
 		// Only flag if the escaped backticks appear at the start of the line (after whitespace)
 		// and aren't embedded within other text (like inline code or examples)
 		if (strings.HasPrefix(trimmed, "\\`\\`\\`mermaid") || strings.HasPrefix(trimmed, "\\`\\`\\`")) &&
-		   !strings.Contains(line, "`\\`\\`\\`") { // Ignore if it's in inline code like `\`\`\``
+			!strings.Contains(line, "`\\`\\`\\`") { // Ignore if it's in inline code like `\`\`\``
 			return nil, fmt.Errorf("line %d: escaped backticks found (\\`\\`\\`). Remove backslashes to use proper markdown code fences: ```", lineNum)
 		}
 

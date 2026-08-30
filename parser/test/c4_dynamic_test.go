@@ -46,8 +46,8 @@ func TestParseC4Dynamic(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "empty diagram",
-			source: `C4Dynamic`,
+			name:    "empty diagram",
+			source:  `C4Dynamic`,
 			wantErr: false,
 		},
 	}

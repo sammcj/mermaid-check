@@ -16,10 +16,10 @@ type ClassStmt interface {
 
 // Class represents a class definition.
 type Class struct {
-	Name        string       // Class name
-	Stereotype  string       // Optional stereotype (e.g., "interface", "abstract")
+	Name        string        // Class name
+	Stereotype  string        // Optional stereotype (e.g., "interface", "abstract")
 	Members     []ClassMember // Class members (attributes and methods)
-	Annotations []string     // Annotations like <<interface>>
+	Annotations []string      // Annotations like <<interface>>
 	Pos         Position
 }
 
@@ -60,8 +60,8 @@ func (r *Relationship) GetPosition() Position { return r.Pos }
 
 // ClassNote represents a note, optionally attached to a class.
 type ClassNote struct {
-	ClassName string   // Class the note is attached to; empty for a standalone/floating note
-	Text      string   // Note text
+	ClassName string // Class the note is attached to; empty for a standalone/floating note
+	Text      string // Note text
 	Pos       Position
 }
 
@@ -72,7 +72,7 @@ func (n *ClassNote) GetPosition() Position { return n.Pos }
 
 // ClassComment represents a comment in the class diagram.
 type ClassComment struct {
-	Text string   // Comment text (without %%)
+	Text string // Comment text (without %%)
 	Pos  Position
 }
 

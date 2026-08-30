@@ -43,8 +43,8 @@ func TestParseC4Context(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "empty diagram",
-			source: `C4Context`,
+			name:    "empty diagram",
+			source:  `C4Context`,
 			wantErr: false,
 		},
 	}

@@ -2,10 +2,10 @@ package ast
 
 // SequenceDiagram represents a complete Mermaid sequence diagram.
 type SequenceDiagram struct {
-	Type       string      // "sequence"
-	Statements []SeqStmt   // All statements in the diagram
-	Source     string      // Original source
-	Pos        Position    // Position in source
+	Type       string    // "sequence"
+	Statements []SeqStmt // All statements in the diagram
+	Source     string    // Original source
+	Pos        Position  // Position in source
 }
 
 // GetType returns the diagram type.
@@ -25,9 +25,9 @@ type SeqStmt interface {
 
 // Participant represents a participant declaration.
 type Participant struct {
-	ID    string   // Participant identifier
-	Alias string   // Display name (optional)
-	Type  string   // "participant", "actor", "boundary", "control", "entity", "database", "collections", "queue"
+	ID    string // Participant identifier
+	Alias string // Display name (optional)
+	Type  string // "participant", "actor", "boundary", "control", "entity", "database", "collections", "queue"
 	Pos   Position
 }
 
@@ -38,13 +38,13 @@ func (p *Participant) GetPosition() Position { return p.Pos }
 
 // Message represents a message between participants.
 type Message struct {
-	From   string   // Source participant ID
-	To     string   // Target participant ID
-	Arrow  string   // Arrow type: "->", "-->", "->>", "-->>", "-x", "--x", "-)", "--)", "<<->>", "<<-->>"
-	Text   string   // Message text (optional)
-	Activate   bool // Activate target on this message
-	Deactivate bool // Deactivate source on this message
-	Pos    Position
+	From       string // Source participant ID
+	To         string // Target participant ID
+	Arrow      string // Arrow type: "->", "-->", "->>", "-->>", "-x", "--x", "-)", "--)", "<<->>", "<<-->>"
+	Text       string // Message text (optional)
+	Activate   bool   // Activate target on this message
+	Deactivate bool   // Deactivate source on this message
+	Pos        Position
 }
 
 func (m *Message) seqStmt() {}
@@ -54,8 +54,8 @@ func (m *Message) GetPosition() Position { return m.Pos }
 
 // Activation represents explicit activation/deactivation.
 type Activation struct {
-	Participant string   // Participant ID
-	Active      bool     // true for activate, false for deactivate
+	Participant string // Participant ID
+	Active      bool   // true for activate, false for deactivate
 	Pos         Position
 }
 
@@ -125,9 +125,9 @@ func (p *Par) GetPosition() Position { return p.Pos }
 
 // Critical represents a critical region block.
 type Critical struct {
-	Label      string    // Description
+	Label      string           // Description
 	Options    []CriticalOption // Critical option branches
-	Statements []SeqStmt // Main statements
+	Statements []SeqStmt        // Main statements
 	Pos        Position
 }
 
@@ -156,10 +156,10 @@ func (b *Break) GetPosition() Position { return b.Pos }
 
 // Note represents a note attached to participants.
 type Note struct {
-	Position string   // "left of", "right of", "over"
+	Position     string   // "left of", "right of", "over"
 	Participants []string // Participant IDs
-	Text     string   // Note content
-	Pos      Position
+	Text         string   // Note content
+	Pos          Position
 }
 
 func (n *Note) seqStmt() {}
@@ -169,10 +169,10 @@ func (n *Note) GetPosition() Position { return n.Pos }
 
 // Box represents a grouping box around participants.
 type Box struct {
-	Colour     string        // Box colour (optional)
-	Label      string        // Box label
+	Colour       string        // Box colour (optional)
+	Label        string        // Box label
 	Participants []Participant // Participants in this box
-	Pos        Position
+	Pos          Position
 }
 
 func (b *Box) seqStmt() {}
@@ -182,7 +182,7 @@ func (b *Box) GetPosition() Position { return b.Pos }
 
 // Autonumber represents the autonumber directive.
 type Autonumber struct {
-	Enabled bool     // Enable/disable autonumbering
+	Enabled bool // Enable/disable autonumbering
 	Pos     Position
 }
 

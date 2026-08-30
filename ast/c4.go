@@ -3,14 +3,14 @@ package ast
 // C4Diagram represents any C4 diagram (Context, Container, Component, Dynamic, Deployment).
 // All C4 diagram types share the same AST structure with common elements.
 type C4Diagram struct {
-	DiagramType   string             // "c4Context", "c4Container", "c4Component", "c4Dynamic", "c4Deployment"
-	Title         string             // Optional title
-	Elements      []C4Element        // All elements (Person, System, Container, Component, Node)
-	Boundaries    []C4Boundary       // Boundary elements (can be nested)
-	Relationships []C4Relationship   // All relationships (Rel, BiRel, etc.)
-	Styles        []C4Style          // Style overrides
-	Source        string             // Original source
-	Pos           Position           // Position in source
+	DiagramType   string           // "c4Context", "c4Container", "c4Component", "c4Dynamic", "c4Deployment"
+	Title         string           // Optional title
+	Elements      []C4Element      // All elements (Person, System, Container, Component, Node)
+	Boundaries    []C4Boundary     // Boundary elements (can be nested)
+	Relationships []C4Relationship // All relationships (Rel, BiRel, etc.)
+	Styles        []C4Style        // Style overrides
+	Source        string           // Original source
+	Pos           Position         // Position in source
 }
 
 // GetType implements the Diagram interface.
@@ -46,13 +46,13 @@ type C4Element struct {
 
 // C4Boundary represents a boundary element that can contain other elements.
 type C4Boundary struct {
-	BoundaryType string         // "Boundary", "Enterprise_Boundary", "System_Boundary", "Container_Boundary"
-	ID           string         // Boundary identifier
-	Label        string         // Display label
-	Type         string         // Optional type (for generic Boundary)
-	Elements     []C4Element    // Nested elements
-	Boundaries   []C4Boundary   // Nested boundaries
-	Pos          Position       // Position in source
+	BoundaryType string       // "Boundary", "Enterprise_Boundary", "System_Boundary", "Container_Boundary"
+	ID           string       // Boundary identifier
+	Label        string       // Display label
+	Type         string       // Optional type (for generic Boundary)
+	Elements     []C4Element  // Nested elements
+	Boundaries   []C4Boundary // Nested boundaries
+	Pos          Position     // Position in source
 }
 
 // C4Relationship represents a relationship between elements.

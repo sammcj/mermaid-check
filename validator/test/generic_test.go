@@ -606,63 +606,64 @@ func TestGenericStrictRules(t *testing.T) {
 // }
 
 // TODO: This test uses private functions/fields and cannot be converted to black-box testing
-// func TestIsAllowedParenthesesContext(t *testing.T) {
-// 	tests := []struct {
-// 		name     string
-// 		line     string
-// 		expected bool
-// 	}{
-// 		{
-// 			name:     "class method signature with +",
-// 			line:     "    +method(param)",
-// 			expected: true,
-// 		},
-// 		{
-// 			name:     "class method signature with -",
-// 			line:     "    -privateMethod()",
-// 			expected: true,
-// 		},
-// 		{
-// 			name:     "class method signature with #",
-// 			line:     "    #protectedMethod(arg1, arg2)",
-// 			expected: true,
-// 		},
-// 		{
-// 			name:     "ER diagram notation with ||",
-// 			line:     "    CUSTOMER ||--o{ ORDER",
-// 			expected: true,
-// 		},
-// 		{
-// 			name:     "ER diagram notation with }|",
-// 			line:     "    ORDER }|--|| CUSTOMER",
-// 			expected: true,
-// 		},
-// 		{
-// 			name:     "ER diagram notation with |{",
-// 			line:     "    CUSTOMER |{--o{ ORDER",
-// 			expected: true,
-// 		},
-// 		{
-// 			name:     "regular text with parentheses",
-// 			line:     "    Some text (with parentheses)",
-// 			expected: false,
-// 		},
-// 		{
-// 			name:     "sequence diagram with parentheses",
-// 			line:     "    participant Alice",
-// 			expected: false,
-// 		},
-// 	}
 //
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			got := isAllowedParenthesesContext(tt.line)
-// 			if got != tt.expected {
-// 				t.Errorf("expected %v, got %v for line: %s", tt.expected, got, tt.line)
-// 			}
-// 		})
-// 	}
-// }
+//	func TestIsAllowedParenthesesContext(t *testing.T) {
+//		tests := []struct {
+//			name     string
+//			line     string
+//			expected bool
+//		}{
+//			{
+//				name:     "class method signature with +",
+//				line:     "    +method(param)",
+//				expected: true,
+//			},
+//			{
+//				name:     "class method signature with -",
+//				line:     "    -privateMethod()",
+//				expected: true,
+//			},
+//			{
+//				name:     "class method signature with #",
+//				line:     "    #protectedMethod(arg1, arg2)",
+//				expected: true,
+//			},
+//			{
+//				name:     "ER diagram notation with ||",
+//				line:     "    CUSTOMER ||--o{ ORDER",
+//				expected: true,
+//			},
+//			{
+//				name:     "ER diagram notation with }|",
+//				line:     "    ORDER }|--|| CUSTOMER",
+//				expected: true,
+//			},
+//			{
+//				name:     "ER diagram notation with |{",
+//				line:     "    CUSTOMER |{--o{ ORDER",
+//				expected: true,
+//			},
+//			{
+//				name:     "regular text with parentheses",
+//				line:     "    Some text (with parentheses)",
+//				expected: false,
+//			},
+//			{
+//				name:     "sequence diagram with parentheses",
+//				line:     "    participant Alice",
+//				expected: false,
+//			},
+//		}
+//
+//		for _, tt := range tests {
+//			t.Run(tt.name, func(t *testing.T) {
+//				got := isAllowedParenthesesContext(tt.line)
+//				if got != tt.expected {
+//					t.Errorf("expected %v, got %v for line: %s", tt.expected, got, tt.line)
+//				}
+//			})
+//		}
+//	}
 //
 // // Helper function to check if a string contains a substring
 func containsSubstr(s, substr string) bool {
@@ -677,6 +678,7 @@ func findSubstr(s, substr string) bool {
 	}
 	return false
 }
+
 // 	return len(s) >= len(substr) && findSubstr(s, substr)
 // }
 //

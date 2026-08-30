@@ -26,20 +26,18 @@ func TestInlineNodeDefinitions(t *testing.T) {
 		},
 		// TODO: Chained links (A --> B --> C) on a single line are not yet supported
 		// This would require additional parsing logic beyond inline node extraction
-		/*
-		{
-			name: "chain of inline nodes",
-			source: `graph TD
-    A[First] --> B[Second] --> C[Third]`,
-			expected: []ast.Statement{
-				&ast.NodeDef{ID: "A", Label: "First", Shape: "[]"},
-				&ast.Link{From: "A", To: "B", Arrow: "-->"},
-				&ast.NodeDef{ID: "B", Label: "Second", Shape: "[]"},
-				&ast.Link{From: "B", To: "C", Arrow: "-->"},
-				&ast.NodeDef{ID: "C", Label: "Third", Shape: "[]"},
-			},
-		},
-		*/
+		// {
+		// 	name: "chain of inline nodes",
+		// 	source: `graph TD
+		//     A[First] --> B[Second] --> C[Third]`,
+		// 	expected: []ast.Statement{
+		// 		&ast.NodeDef{ID: "A", Label: "First", Shape: "[]"},
+		// 		&ast.Link{From: "A", To: "B", Arrow: "-->"},
+		// 		&ast.NodeDef{ID: "B", Label: "Second", Shape: "[]"},
+		// 		&ast.Link{From: "B", To: "C", Arrow: "-->"},
+		// 		&ast.NodeDef{ID: "C", Label: "Third", Shape: "[]"},
+		// 	},
+		// },
 		{
 			name: "mixed standalone and inline",
 			source: `graph LR

@@ -43,8 +43,8 @@ func (p *MindmapParser) Parse(source string) (ast.Diagram, error) {
 	// Build tree structure from indented lines
 	nodeStack := make([]*ast.MindmapNode, 0)
 	lastLevel := -1
-	indentSize := 0    // Will be detected as 2 or 4
-	rootIndent := -1   // Track root indentation
+	indentSize := 0  // Will be detected as 2 or 4
+	rootIndent := -1 // Track root indentation
 
 	for i := 1; i < len(lines); i++ {
 		line := lines[i]
@@ -182,10 +182,10 @@ func parseNodeText(line string) (text string, shape string) {
 		shape  string
 	}{
 		{"))", "((", "))(("}, // Hexagon - must check before ()
-		{"((", "))", "(())"},  // Double circle
-		{"{{", "}}", "{{}}"},  // Cloud
-		{"[", "]", "[]"},      // Square
-		{"(", ")", "()"},      // Circle
+		{"((", "))", "(())"}, // Double circle
+		{"{{", "}}", "{{}}"}, // Cloud
+		{"[", "]", "[]"},     // Square
+		{"(", ")", "()"},     // Circle
 	}
 
 	for _, s := range shapes {

@@ -98,8 +98,7 @@ func ParseFile(path string) ([]ast.Diagram, error) {
 // containsMarkdownFences checks if the content contains markdown code fences.
 func containsMarkdownFences(content string) bool {
 	// Check for ```mermaid or ~~~mermaid code fences
-	return len(content) > 10 && (
-		contains(content, "```mermaid") ||
+	return len(content) > 10 && (contains(content, "```mermaid") ||
 		contains(content, "~~~mermaid") ||
 		contains(content, "``` mermaid"))
 }
