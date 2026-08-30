@@ -1,6 +1,7 @@
 package parser_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/sammcj/mermaid-check/ast"
@@ -113,5 +114,28 @@ func TestStateParser_CompositeState(t *testing.T) {
 	}
 	if _, ok := comp.Nested[2].(*ast.EndState); !ok {
 		t.Errorf("nested[2] = %T, want *ast.EndState", comp.Nested[2])
+	}
+}
+
+func TestStateParser_UnclosedCompositeState(t *testing.T) {
+	src := "stateDiagram-v2\n" +
+		"    state Broken {\n" +
+		"        a --> b\n" +
+		"    Foo --> Bar"
+	if _, err := parser.NewStateParser().Parse(src); err == nil {
+		t.Fatal("Parse() error = nil, want unclosed composite state error")
+	} else if !strings.Contains(err.Error(), "unclosed composite state") {
+		t.Errorf("Parse() error = %q, want it to mention an unclosed composite state", err)
+	}
+}
+
+func TestStateParser_UnclosedNestedCompositeState(t *testing.T) {
+	src := "stateDiagram-v2\n" +
+		"    state Outer {\n" +
+		"        state Inner {\n" +
+		"            a --> b\n" +
+		"    }"
+	if _, err := parser.NewStateParser().Parse(src); err == nil {
+		t.Fatal("Parse() error = nil, want unclosed composite state error")
 	}
 }

@@ -204,3 +204,53 @@ func TestClassParser_Members(t *testing.T) {
 		}
 	}
 }
+
+func TestClassParser_MemberClassifiers(t *testing.T) {
+	src := "classDiagram\n" +
+		"    class Shape {\n" +
+		"        +String colour$\n" +
+		"        +draw()*\n" +
+		"        +area(int w) int*\n" +
+		"        +create() Shape$\n" +
+		"        +String name\n" +
+		"    }"
+	d, err := parser.NewClassParser().Parse(src)
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+	cd, ok := d.(*ast.ClassDiagram)
+	if !ok {
+		t.Fatalf("Parse() = %T, want *ast.ClassDiagram", d)
+	}
+	var class *ast.Class
+	for _, s := range cd.Statements {
+		if c, ok := s.(*ast.Class); ok {
+			class = c
+			break
+		}
+	}
+	if class == nil {
+		t.Fatal("no class statement found")
+	}
+
+	want := []ast.ClassMember{
+		{Visibility: "+", Name: "colour", Type: "String", IsStatic: true},
+		{Visibility: "+", Name: "draw", IsMethod: true, IsAbstract: true},
+		{Visibility: "+", Name: "area", Type: "int", IsMethod: true, IsAbstract: true, Parameters: []string{"int w"}},
+		{Visibility: "+", Name: "create", Type: "Shape", IsMethod: true, IsStatic: true},
+		{Visibility: "+", Name: "name", Type: "String"},
+	}
+	if len(class.Members) != len(want) {
+		t.Fatalf("got %d members, want %d: %+v", len(class.Members), len(want), class.Members)
+	}
+	for i, w := range want {
+		g := class.Members[i]
+		if g.Visibility != w.Visibility || g.Name != w.Name || g.Type != w.Type ||
+			g.IsMethod != w.IsMethod || g.IsStatic != w.IsStatic || g.IsAbstract != w.IsAbstract {
+			t.Errorf("member %d = %+v, want %+v", i, g, w)
+		}
+		if strings.Join(g.Parameters, ",") != strings.Join(w.Parameters, ",") {
+			t.Errorf("member %d params = %v, want %v", i, g.Parameters, w.Parameters)
+		}
+	}
+}
