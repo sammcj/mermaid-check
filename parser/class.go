@@ -10,13 +10,13 @@ import (
 
 var (
 	// Class diagram patterns
-	classHeaderPattern = regexp.MustCompile(`^classDiagram\s*$`)
+	classHeaderPattern  = regexp.MustCompile(`^classDiagram\s*$`)
 	classCommentPattern = regexp.MustCompile(`^%%(.*)$`)
 
 	// Class declaration patterns
-	classDeclPattern = regexp.MustCompile(`^class\s+(\w+)(?:\s*<<(.+)>>)?\s*$`)
+	classDeclPattern      = regexp.MustCompile(`^class\s+(\w+)(?:\s*<<(.+)>>)?\s*$`)
 	classBodyStartPattern = regexp.MustCompile(`^class\s+(\w+)(?:\s*<<(.+)>>)?\s*\{\s*$`)
-	classBodyEndPattern = regexp.MustCompile(`^\}\s*$`)
+	classBodyEndPattern   = regexp.MustCompile(`^\}\s*$`)
 
 	// Member patterns. Group 3 captures the whole parameter list including its
 	// parentheses, so an empty `()` still marks a method (distinct from an

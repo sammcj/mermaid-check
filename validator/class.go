@@ -142,11 +142,11 @@ func (r *ValidRelationshipType) ValidateClass(diagram *ast.ClassDiagram) []Valid
 	var errors []ValidationError
 	validTypes := map[string]bool{
 		"inheritance": true,
-		"composition":  true,
-		"aggregation":  true,
-		"association":  true,
-		"dependency":   true,
-		"realization":  true,
+		"composition": true,
+		"aggregation": true,
+		"association": true,
+		"dependency":  true,
+		"realization": true,
 	}
 
 	for _, stmt := range diagram.Statements {

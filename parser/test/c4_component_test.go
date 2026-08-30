@@ -43,8 +43,8 @@ func TestParseC4Component(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "empty diagram",
-			source: `C4Component`,
+			name:    "empty diagram",
+			source:  `C4Component`,
 			wantErr: false,
 		},
 	}

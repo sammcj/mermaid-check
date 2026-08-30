@@ -97,12 +97,12 @@ func (r *NoEmptyNodesRule) Validate(diagram *ast.MindmapDiagram) []*ValidationEr
 type ValidShapeRule struct{}
 
 var validShapes = map[string]bool{
-	"":       true, // Default (no shape)
-	"()":     true,
-	"(())":   true,
-	"[]":     true,
-	"{{}}":   true,
-	"))((":   true,
+	"":     true, // Default (no shape)
+	"()":   true,
+	"(())": true,
+	"[]":   true,
+	"{{}}": true,
+	"))((": true,
 }
 
 // Validate checks that all node shapes are recognised.

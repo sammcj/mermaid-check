@@ -306,8 +306,8 @@ func TestExtractFromMarkdown_DifferentDiagramTypes(t *testing.T) {
 			expectedType: "c4Deployment",
 		},
 		{
-			name: "unknown type",
-			source: `unknown diagram type`,
+			name:         "unknown type",
+			source:       `unknown diagram type`,
 			expectedType: "unknown",
 		},
 	}

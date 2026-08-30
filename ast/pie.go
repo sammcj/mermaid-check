@@ -2,12 +2,12 @@ package ast
 
 // PieDiagram represents a pie chart diagram AST.
 type PieDiagram struct {
-	Type        string      // Always "pie"
-	Title       string      // Optional title
-	ShowData    bool        // Whether to show data values
-	DataEntries []PieEntry  // Data entries
-	Source      string      // Original source
-	Pos         Position    // Position in source
+	Type        string     // Always "pie"
+	Title       string     // Optional title
+	ShowData    bool       // Whether to show data values
+	DataEntries []PieEntry // Data entries
+	Source      string     // Original source
+	Pos         Position   // Position in source
 }
 
 // PieEntry represents a single data entry in a pie chart.

@@ -43,8 +43,8 @@ func TestParseC4Container(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "empty diagram",
-			source: `C4Container`,
+			name:    "empty diagram",
+			source:  `C4Container`,
 			wantErr: false,
 		},
 	}

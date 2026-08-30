@@ -118,10 +118,10 @@ func TestReferenceChecker(t *testing.T) {
 
 func TestEnumValidator(t *testing.T) {
 	tests := []struct {
-		name       string
-		valueType  string
-		allowed    []string
-		checks     []struct {
+		name      string
+		valueType string
+		allowed   []string
+		checks    []struct {
 			value   string
 			pos     ast.Position
 			wantErr bool

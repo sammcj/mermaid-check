@@ -58,8 +58,8 @@ func TestParse(t *testing.T) {
 			name: "state diagram v2",
 			source: `stateDiagram-v2
     [*] --> State1`,
-			expectedType:  "stateDiagram-v2",
-			expectState:   true,
+			expectedType: "stateDiagram-v2",
+			expectState:  true,
 		},
 		{
 			name: "er diagram",

@@ -184,16 +184,16 @@ func (r *ValidMessageArrows) Name() string { return "valid-message-arrows" }
 func (r *ValidMessageArrows) ValidateSequence(diagram *ast.SequenceDiagram) []ValidationError {
 	var errors []ValidationError
 	validArrows := map[string]bool{
-		"->":      true,
-		"-->":     true,
-		"->>":     true,
-		"-->>":    true,
-		"-x":      true,
-		"--x":     true,
-		"-)":      true,
-		"--)":     true,
-		"<<->>":   true,
-		"<<-->>":  true,
+		"->":     true,
+		"-->":    true,
+		"->>":    true,
+		"-->>":   true,
+		"-x":     true,
+		"--x":    true,
+		"-)":     true,
+		"--)":    true,
+		"<<->>":  true,
+		"<<-->>": true,
 	}
 
 	r.checkArrows(diagram.Statements, validArrows, &errors)

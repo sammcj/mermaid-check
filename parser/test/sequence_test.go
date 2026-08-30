@@ -57,8 +57,8 @@ func TestSequenceParser_Parse(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "empty diagram",
-			source: ``,
+			name:    "empty diagram",
+			source:  ``,
 			wantErr: true,
 		},
 	}
