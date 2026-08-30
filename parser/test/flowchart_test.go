@@ -264,6 +264,21 @@ func TestParseInlineClassEdgeCases(t *testing.T) {
 			links:    1,
 			assigned: map[string]string{"A": "hot"},
 		},
+		{
+			// A `>` already inside a label is text, not an asymmetric shape.
+			name:     "greater-than inside a label",
+			source:   "flowchart LR\n    B{count>10}:::warn --> C",
+			links:    1,
+			assigned: map[string]string{"B": "warn"},
+		},
+		{
+			// Same when the label is quoted: the id is still the node's, not
+			// the fragment before the `>`.
+			name:     "greater-than inside a quoted label",
+			source:   "flowchart LR\n    A[\"a>b\"]:::hot --> B",
+			links:    1,
+			assigned: map[string]string{"A": "hot"},
+		},
 	}
 
 	for _, tt := range tests {

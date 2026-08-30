@@ -489,8 +489,9 @@ func cutInlineClasses(line string, lineNum int) (string, []ast.Statement) {
 		case piped:
 		case c == '[' || c == '(' || c == '{':
 			depth++
-		case c == '>' && i > 0 && isIdentByte(line[i-1]):
-			// `A>Start]` opens an asymmetric node; `-->` does not.
+		case c == '>' && depth == 0 && i > 0 && isIdentByte(line[i-1]):
+			// `A>Start]` opens an asymmetric node; `-->` does not, and a `>`
+			// already inside a label (`A[a>b]`) is text, not a shape.
 			depth++
 		case c == ']' || c == ')' || c == '}':
 			depth--
@@ -522,6 +523,7 @@ func trailingNodeID(s string) string {
 	}
 	if c := s[len(s)-1]; c == ']' || c == ')' || c == '}' {
 		i, depth := len(s)-1, 0
+		asym := -1 // `A>Start]` closes on a `>` because it has no opening bracket
 	scan:
 		for ; i >= 0; i-- {
 			switch s[i] {
@@ -533,13 +535,13 @@ func trailingNodeID(s string) string {
 					break scan
 				}
 			case '>':
-				if i > 0 && isIdentByte(s[i-1]) {
-					depth--
-					if depth == 0 {
-						break scan
-					}
+				if depth == 1 && asym < 0 && i > 0 && isIdentByte(s[i-1]) {
+					asym = i
 				}
 			}
+		}
+		if i < 0 {
+			i = asym
 		}
 		if i < 0 {
 			return ""
