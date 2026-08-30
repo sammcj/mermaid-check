@@ -1,4 +1,4 @@
-.PHONY: help build test lint clean
+.PHONY: help build test lint clean changelog
 
 # Default target
 .DEFAULT_GOAL := build
@@ -44,6 +44,12 @@ deps: ## Update all dependencies and verify module dependencies
 	@go mod verify
 	@go get -t -u ./...
 	@go mod verify
+
+changelog: ## Preview the next version and release notes CI would generate
+	@command -v git-cliff >/dev/null || { echo "git-cliff not installed: brew install git-cliff"; exit 1; }
+	@echo "Next version: $$(git cliff --bumped-version)"
+	@echo ""
+	@git cliff --unreleased --bump
 
 coverage: ## Generate test coverage report with detailed statistics
 	@echo "Generating coverage report..."
