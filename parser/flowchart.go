@@ -489,10 +489,13 @@ func cutInlineClasses(line string, lineNum int) (string, []ast.Statement) {
 		case piped:
 		case c == '[' || c == '(' || c == '{':
 			depth++
+		case c == '>' && i > 0 && isIdentByte(line[i-1]):
+			// `A>Start]` opens an asymmetric node; `-->` does not.
+			depth++
 		case c == ']' || c == ')' || c == '}':
 			depth--
 		case depth == 0 && strings.HasPrefix(line[i:], ":::"):
-			name := leadingIdent(line[i+3:])
+			name := leadingClassName(line[i+3:])
 			id := trailingNodeID(out.String())
 			if name != "" && id != "" {
 				stmts = append(stmts, &ast.ClassAssignment{
@@ -529,6 +532,13 @@ func trailingNodeID(s string) string {
 				if depth == 0 {
 					break scan
 				}
+			case '>':
+				if i > 0 && isIdentByte(s[i-1]) {
+					depth--
+					if depth == 0 {
+						break scan
+					}
+				}
 			}
 		}
 		if i < 0 {
@@ -543,12 +553,22 @@ func trailingNodeID(s string) string {
 	return s[end:]
 }
 
-func leadingIdent(s string) string {
+// leadingClassName reads the class name after `:::`. Mermaid's idString admits
+// MINUS, so a hyphen is taken when another name byte follows it — that keeps
+// `warning-high` whole without swallowing the arrow in `A:::hot-->B`.
+func leadingClassName(s string) string {
 	i := 0
-	for i < len(s) && isIdentByte(s[i]) {
-		i++
+	for i < len(s) {
+		switch {
+		case isIdentByte(s[i]):
+			i++
+		case s[i] == '-' && i+1 < len(s) && isIdentByte(s[i+1]):
+			i++
+		default:
+			return s[:i]
+		}
 	}
-	return s[:i]
+	return s
 }
 
 func isIdentByte(c byte) bool {
