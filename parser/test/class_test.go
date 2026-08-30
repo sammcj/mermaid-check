@@ -83,6 +83,47 @@ func TestClassParser_SupportedTypes(t *testing.T) {
 	}
 }
 
+func TestClassParser_Relationships(t *testing.T) {
+	src := "classDiagram\n" +
+		"    Animal <|-- Dog\n" +
+		"    Duck ..|> Flyer\n" +
+		"    Car *-- Wheel\n" +
+		"    House o-- Room\n" +
+		"    A --> B\n" +
+		"    X ..> Y"
+	d, err := parser.NewClassParser().Parse(src)
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+	cd, ok := d.(*ast.ClassDiagram)
+	if !ok {
+		t.Fatalf("Parse() = %T, want *ast.ClassDiagram", d)
+	}
+	var rels []*ast.Relationship
+	for _, s := range cd.Statements {
+		if r, ok := s.(*ast.Relationship); ok {
+			rels = append(rels, r)
+		}
+	}
+	want := []ast.Relationship{
+		{From: "Animal", To: "Dog", Type: "inheritance"},
+		{From: "Duck", To: "Flyer", Type: "realization"},
+		{From: "Car", To: "Wheel", Type: "composition"},
+		{From: "House", To: "Room", Type: "aggregation"},
+		{From: "A", To: "B", Type: "association"},
+		{From: "X", To: "Y", Type: "dependency"},
+	}
+	if len(rels) != len(want) {
+		t.Fatalf("got %d relationships, want %d: %+v", len(rels), len(want), rels)
+	}
+	for i, w := range want {
+		g := rels[i]
+		if g.From != w.From || g.To != w.To || g.Type != w.Type {
+			t.Errorf("rel %d = {From:%q To:%q Type:%q}, want {From:%q To:%q Type:%q}", i, g.From, g.To, g.Type, w.From, w.To, w.Type)
+		}
+	}
+}
+
 func TestClassParser_Notes(t *testing.T) {
 	src := "classDiagram\n" +
 		"    note for Animal \"An animal note\"\n" +

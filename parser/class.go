@@ -28,7 +28,7 @@ var (
 	// Association: --, -->
 	// Dependency: .., ..>, <..
 	// Realization: ..|>, <|..
-	relationshipPattern = regexp.MustCompile(`^(\w+)\s+(?:"([^"]+)"\s+)?([<*o])?(-{2}|\.{2})([>|*o]?)\s+(?:"([^"]+)"\s+)?(\w+)(?:\s*:\s*(.+))?\s*$`)
+	relationshipPattern = regexp.MustCompile(`^(\w+)\s+(?:"([^"]+)"\s+)?(<\||[<*o])?(-{2}|\.{2})(\|>|[>|*o])?\s+(?:"([^"]+)"\s+)?(\w+)(?:\s*:\s*(.+))?\s*$`)
 
 	// Note patterns. classNotePattern (targeted) is tried before
 	// classStandaloneNotePattern so a "note for X ..." line is never
