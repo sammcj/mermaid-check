@@ -224,8 +224,10 @@ func (p *ClassParser) parseClassBody(lines []string, startLine int) ([]ast.Class
 			continue
 		}
 
-		// Parse member
-		if matches := memberPattern.FindStringSubmatch(trimmed); matches != nil {
+		// Parse member. Classifiers sit at the very end of the line, after the
+		// return type if there is one, so strip them before matching.
+		body, isStatic, isAbstract := splitMemberClassifier(trimmed)
+		if matches := memberPattern.FindStringSubmatch(body); matches != nil {
 			ident := matches[2]
 			parens := matches[3] // "", "()", or "(args)"
 			rest := ""
@@ -236,6 +238,8 @@ func (p *ClassParser) parseClassBody(lines []string, startLine int) ([]ast.Class
 			member := ast.ClassMember{
 				Visibility: matches[1],
 				IsMethod:   parens != "",
+				IsStatic:   isStatic,
+				IsAbstract: isAbstract,
 				Pos:        ast.Position{Line: lineNum, Column: 1},
 			}
 
@@ -266,6 +270,26 @@ func (p *ClassParser) parseClassBody(lines []string, startLine int) ([]ast.Class
 	}
 
 	return nil, 0, fmt.Errorf("line %d: unclosed class body", startLine)
+}
+
+// splitMemberClassifier strips a trailing member classifier from a class body
+// line, returning the remaining text and the flags it set. Mermaid places
+// classifiers at the very end of the member: `$` marks a static field or
+// method, `*` an abstract method (e.g. `+draw()*`, `+area() int*`,
+// `+String colour$`).
+func splitMemberClassifier(line string) (body string, isStatic, isAbstract bool) {
+	if line == "" {
+		return line, false, false
+	}
+
+	switch line[len(line)-1] {
+	case '$':
+		return strings.TrimSpace(line[:len(line)-1]), true, false
+	case '*':
+		return strings.TrimSpace(line[:len(line)-1]), false, true
+	default:
+		return line, false, false
+	}
 }
 
 func (p *ClassParser) determineRelationshipType(left, link, right string) string {

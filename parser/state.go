@@ -70,13 +70,16 @@ func (p *StateParser) Parse(source string) (ast.Diagram, error) {
 	}
 
 	// Parse statements
-	statements := p.parseStatements(lines[1:], 1)
+	statements, err := p.parseStatements(lines[1:], 1)
+	if err != nil {
+		return nil, err
+	}
 	diagram.Statements = statements
 
 	return diagram, nil
 }
 
-func (p *StateParser) parseStatements(lines []string, startLine int) []ast.StateStmt {
+func (p *StateParser) parseStatements(lines []string, startLine int) ([]ast.StateStmt, error) {
 	var statements []ast.StateStmt
 	lineNum := startLine
 
@@ -128,12 +131,19 @@ func (p *StateParser) parseStatements(lines []string, startLine int) []ast.State
 
 		// Handle composite state: recurse into its `{ }` block.
 		if matches := stateCompositePattern.FindStringSubmatch(trimmed); matches != nil {
-			nested, consumed := extractBraceBlock(lines[i+1:])
+			nested, consumed, closed := extractBraceBlock(lines[i+1:])
+			if !closed {
+				return nil, fmt.Errorf("line %d: unclosed composite state %q", lineNum, matches[2])
+			}
+			nestedStmts, err := p.parseStatements(nested, lineNum)
+			if err != nil {
+				return nil, err
+			}
 			statements = append(statements, &ast.State{
 				ID:          matches[2],
 				Description: matches[1],
 				IsComposite: true,
-				Nested:      p.parseStatements(nested, lineNum),
+				Nested:      nestedStmts,
 				Pos:         ast.Position{Line: lineNum, Column: 1},
 			})
 			i += consumed
@@ -203,14 +213,16 @@ func (p *StateParser) parseStatements(lines []string, startLine int) []ast.State
 		continue
 	}
 
-	return statements
+	return statements, nil
 }
 
 // extractBraceBlock returns the lines inside a composite state's `{ }` block
-// (the opening line already consumed by the caller) and the number of lines
-// consumed including the closing `}`. Nested blocks are balanced by brace
-// depth so the inner lines can be re-parsed recursively.
-func extractBraceBlock(lines []string) ([]string, int) {
+// (the opening line already consumed by the caller), the number of lines
+// consumed including the closing `}`, and whether that closing brace was
+// found. Nested blocks are balanced by brace depth so the inner lines can be
+// re-parsed recursively. An unbalanced block reports closed=false rather than
+// swallowing the remainder of the diagram.
+func extractBraceBlock(lines []string) ([]string, int, bool) {
 	depth := 1
 	var inner []string
 	for i, line := range lines {
@@ -218,12 +230,12 @@ func extractBraceBlock(lines []string) ([]string, int) {
 		if trimmed == "}" {
 			depth--
 			if depth == 0 {
-				return inner, i + 1
+				return inner, i + 1, true
 			}
 		} else if strings.HasSuffix(trimmed, "{") {
 			depth++
 		}
 		inner = append(inner, line)
 	}
-	return inner, len(lines)
+	return inner, len(lines), false
 }
