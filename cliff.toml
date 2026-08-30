@@ -6,7 +6,11 @@ header = ""
 body = """
 {% macro remote_url() %}https://github.com/sammcj/mermaid-check{% endmacro %}
 {% if version -%}
+{% if previous.version -%}
 ### [{{ version | trim_start_matches(pat="v") }}]({{ self::remote_url() }}/compare/{{ previous.version }}...{{ version }}) ({{ timestamp | date(format="%Y-%m-%d") }})
+{% else -%}
+### [{{ version | trim_start_matches(pat="v") }}]({{ self::remote_url() }}/releases/tag/{{ version }}) ({{ timestamp | date(format="%Y-%m-%d") }})
+{% endif -%}
 {% else -%}
 ### Unreleased
 {% endif -%}
@@ -54,6 +58,9 @@ commit_parsers = [
 ]
 
 [bump]
+# Needs the v prefix, otherwise a repo with no tags yet proposes a bare "0.1.0"
+# and git-cliff rejects it against tag_pattern.
+initial_tag = "v0.1.0"
 features_always_bump_minor = true
 breaking_always_bump_major = true
 custom_minor_increment_regex = "^deps$"
