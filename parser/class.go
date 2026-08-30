@@ -169,6 +169,7 @@ func (p *ClassParser) parseStatements(lines []string, startLine int) ([]ast.Clas
 				From:            from,
 				To:              to,
 				Type:            relType,
+				Operator:        leftSymbol + linkType + rightSymbol,
 				Label:           label,
 				FromCardinality: fromCard,
 				ToCardinality:   toCard,
