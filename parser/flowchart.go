@@ -129,6 +129,11 @@ func (p *FlowchartParser) parseStatements(lines []string, startLine int, inSubgr
 			continue
 		}
 
+		// Peel any `id:::class` shorthand off the line before the node and link
+		// patterns see it; those patterns do not admit the suffix, and a line
+		// carrying one would otherwise match nothing and be dropped whole.
+		trimmed, inlineClasses := cutInlineClasses(trimmed, lineNum)
+
 		// Handle subgraph end
 		if subgraphEndPattern.MatchString(trimmed) {
 			if !inSubgraph {
@@ -229,6 +234,7 @@ func (p *FlowchartParser) parseStatements(lines []string, startLine int, inSubgr
 			// Clear pending nodes
 			p.pendingFromNode = nil
 			p.pendingToNode = nil
+			statements = append(statements, inlineClasses...)
 			continue
 		}
 
@@ -238,10 +244,13 @@ func (p *FlowchartParser) parseStatements(lines []string, startLine int, inSubgr
 				p.definedNodes[nodeDef.ID] = true
 			}
 			statements = append(statements, stmt)
+			statements = append(statements, inlineClasses...)
 			continue
 		}
 
 		// If we can't parse the line, skip it (for now - could return error in strict mode)
+		// A line that was nothing but `id:::class` still carries its assignment.
+		statements = append(statements, inlineClasses...)
 		continue
 	}
 
@@ -453,4 +462,117 @@ func (p *FlowchartParser) parseStyles(styleStr string) map[string]string {
 	}
 
 	return styles
+}
+
+// cutInlineClasses strips every `id:::class` shorthand from a flowchart line,
+// returning the cleaned line and the assignments it carried. Mermaid treats
+// `A:::hot` as exactly `class A hot`, so it is reported as a ClassAssignment
+// and every consumer that already handles `class` picks the shorthand up
+// unchanged. Only a suffix at bracket depth zero is taken, so a `:::` inside a
+// node label or an edge label survives.
+func cutInlineClasses(line string, lineNum int) (string, []ast.Statement) {
+	var (
+		out    strings.Builder
+		stmts  []ast.Statement
+		depth  int
+		quoted bool
+		piped  bool
+	)
+	for i := 0; i < len(line); {
+		c := line[i]
+		switch {
+		case c == '"':
+			quoted = !quoted
+		case quoted:
+		case c == '|':
+			piped = !piped
+		case piped:
+		case c == '[' || c == '(' || c == '{':
+			depth++
+		case c == '>' && depth == 0 && i > 0 && isIdentByte(line[i-1]):
+			// `A>Start]` opens an asymmetric node; `-->` does not, and a `>`
+			// already inside a label (`A[a>b]`) is text, not a shape.
+			depth++
+		case c == ']' || c == ')' || c == '}':
+			depth--
+		case depth == 0 && strings.HasPrefix(line[i:], ":::"):
+			name := leadingClassName(line[i+3:])
+			id := trailingNodeID(out.String())
+			if name != "" && id != "" {
+				stmts = append(stmts, &ast.ClassAssignment{
+					NodeIDs:   []string{id},
+					ClassName: name,
+					Pos:       ast.Position{Line: lineNum, Column: 1},
+				})
+				i += 3 + len(name)
+				continue
+			}
+		}
+		out.WriteByte(c)
+		i++
+	}
+	return out.String(), stmts
+}
+
+// trailingNodeID reads the node id that the text ends on, stepping back over a
+// bracketed label first so `A[Start]` yields "A".
+func trailingNodeID(s string) string {
+	s = strings.TrimRight(s, " \t")
+	if s == "" {
+		return ""
+	}
+	if c := s[len(s)-1]; c == ']' || c == ')' || c == '}' {
+		i, depth := len(s)-1, 0
+		asym := -1 // `A>Start]` closes on a `>` because it has no opening bracket
+	scan:
+		for ; i >= 0; i-- {
+			switch s[i] {
+			case ']', ')', '}':
+				depth++
+			case '[', '(', '{':
+				depth--
+				if depth == 0 {
+					break scan
+				}
+			case '>':
+				if depth == 1 && asym < 0 && i > 0 && isIdentByte(s[i-1]) {
+					asym = i
+				}
+			}
+		}
+		if i < 0 {
+			i = asym
+		}
+		if i < 0 {
+			return ""
+		}
+		s = s[:i]
+	}
+	end := len(s)
+	for end > 0 && isIdentByte(s[end-1]) {
+		end--
+	}
+	return s[end:]
+}
+
+// leadingClassName reads the class name after `:::`. Mermaid's idString admits
+// MINUS, so a hyphen is taken when another name byte follows it — that keeps
+// `warning-high` whole without swallowing the arrow in `A:::hot-->B`.
+func leadingClassName(s string) string {
+	i := 0
+	for i < len(s) {
+		switch {
+		case isIdentByte(s[i]):
+			i++
+		case s[i] == '-' && i+1 < len(s) && isIdentByte(s[i+1]):
+			i++
+		default:
+			return s[:i]
+		}
+	}
+	return s
+}
+
+func isIdentByte(c byte) bool {
+	return c == '_' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9'
 }

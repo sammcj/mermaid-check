@@ -4,6 +4,7 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/sammcj/mermaid-check/ast"
@@ -144,5 +145,166 @@ func TestParseStyleStatement(t *testing.T) {
 	want := map[string]string{"fill": "#f9f", "stroke": "#333", "stroke-width": "2px"}
 	if !maps.Equal(got.Styles, want) {
 		t.Errorf("Styles = %v, want %v", got.Styles, want)
+	}
+}
+
+func TestParseInlineClassShorthand(t *testing.T) {
+	source := `flowchart LR
+    A[Start]:::hot --> B[End]
+    C:::cold
+    D["a:::b"] --> E`
+
+	d, err := parser.NewFlowchartParser().Parse(source)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+	diagram := d.(*ast.Flowchart)
+
+	var links int
+	var nodes []string
+	assigned := map[string]string{}
+	for _, s := range diagram.Statements {
+		switch v := s.(type) {
+		case *ast.Link:
+			links++
+		case *ast.NodeDef:
+			nodes = append(nodes, v.ID+"="+v.Label)
+		case *ast.ClassAssignment:
+			for _, id := range v.NodeIDs {
+				assigned[id] = v.ClassName
+			}
+		}
+	}
+
+	if links != 2 {
+		t.Errorf("got %d links, want 2 (a :::class must not drop the statement)", links)
+	}
+	// Bare and unlabeled node references (C, E) produce no NodeDef; only the
+	// labeled ones do.
+	wantNodes := []string{"A=Start", "B=End", `D="a:::b"`}
+	for _, want := range wantNodes {
+		if !slices.Contains(nodes, want) {
+			t.Errorf("missing node %q; got %v", want, nodes)
+		}
+	}
+	wantAssigned := map[string]string{"A": "hot", "C": "cold"}
+	if !maps.Equal(assigned, wantAssigned) {
+		t.Errorf("class assignments = %v, want %v", assigned, wantAssigned)
+	}
+}
+
+// A `:::` sequence that is part of prose or an edge label is not a class
+// shorthand: peeling it off would silently rewrite the diagram's text.
+func TestInlineClassShorthandLeavesTextAlone(t *testing.T) {
+	source := `flowchart LR
+    %% styling note: A:::hot is applied below
+    A -->|weight a:::b| B
+    A:::hot`
+
+	d, err := parser.NewFlowchartParser().Parse(source)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	var comments, labels []string
+	assigned := map[string]string{}
+	for _, s := range d.(*ast.Flowchart).Statements {
+		switch v := s.(type) {
+		case *ast.Comment:
+			comments = append(comments, v.Text)
+		case *ast.Link:
+			labels = append(labels, v.Label)
+		case *ast.ClassAssignment:
+			for _, id := range v.NodeIDs {
+				assigned[id] = v.ClassName
+			}
+		}
+	}
+
+	wantComments := []string{"styling note: A:::hot is applied below"}
+	if !slices.Equal(comments, wantComments) {
+		t.Errorf("comments = %v, want %v", comments, wantComments)
+	}
+	wantLabels := []string{"weight a:::b"}
+	if !slices.Equal(labels, wantLabels) {
+		t.Errorf("link labels = %v, want %v", labels, wantLabels)
+	}
+	wantAssigned := map[string]string{"A": "hot"}
+	if !maps.Equal(assigned, wantAssigned) {
+		t.Errorf("class assignments = %v, want %v", assigned, wantAssigned)
+	}
+}
+
+func TestParseInlineClassEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		source   string
+		links    int
+		assigned map[string]string
+	}{
+		{
+			// nodeDefPattern accepts the asymmetric `A>Start]` shape, so the
+			// peel has to step over it the same way it steps over `A[Start]`.
+			name:     "asymmetric node shape",
+			source:   "flowchart LR\n    A>Start]:::hot --> B",
+			links:    1,
+			assigned: map[string]string{"A": "hot"},
+		},
+		{
+			// Mermaid's idString admits MINUS, so the class name runs past it.
+			name:     "hyphenated class name",
+			source:   "flowchart LR\n    A[x]:::warning-high --> B",
+			links:    1,
+			assigned: map[string]string{"A": "warning-high"},
+		},
+		{
+			// ...but a trailing `-` belongs to the arrow, not the class name.
+			name:     "class name butted against an arrow",
+			source:   "flowchart LR\n    A[x]:::hot-->B",
+			links:    1,
+			assigned: map[string]string{"A": "hot"},
+		},
+		{
+			// A `>` already inside a label is text, not an asymmetric shape.
+			name:     "greater-than inside a label",
+			source:   "flowchart LR\n    B{count>10}:::warn --> C",
+			links:    1,
+			assigned: map[string]string{"B": "warn"},
+		},
+		{
+			// Same when the label is quoted: the id is still the node's, not
+			// the fragment before the `>`.
+			name:     "greater-than inside a quoted label",
+			source:   "flowchart LR\n    A[\"a>b\"]:::hot --> B",
+			links:    1,
+			assigned: map[string]string{"A": "hot"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d, err := parser.NewFlowchartParser().Parse(tt.source)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+			links := 0
+			assigned := map[string]string{}
+			for _, s := range d.(*ast.Flowchart).Statements {
+				switch v := s.(type) {
+				case *ast.Link:
+					links++
+				case *ast.ClassAssignment:
+					for _, id := range v.NodeIDs {
+						assigned[id] = v.ClassName
+					}
+				}
+			}
+			if links != tt.links {
+				t.Errorf("got %d links, want %d", links, tt.links)
+			}
+			if !maps.Equal(assigned, tt.assigned) {
+				t.Errorf("class assignments = %v, want %v", assigned, tt.assigned)
+			}
+		})
 	}
 }
