@@ -1,8 +1,10 @@
 package parser_test
 
 import (
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/sammcj/mermaid-check/ast"
@@ -115,5 +117,50 @@ func TestParseSubgraphTitle(t *testing.T) {
 				t.Errorf("subgraph id = %q, want %q", sg.ID, tt.wantID)
 			}
 		})
+	}
+}
+
+func TestParseInlineClassShorthand(t *testing.T) {
+	source := `flowchart LR
+    A[Start]:::hot --> B[End]
+    C:::cold
+    D["a:::b"] --> E`
+
+	d, err := parser.NewFlowchartParser().Parse(source)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+	diagram := d.(*ast.Flowchart)
+
+	var links int
+	var nodes []string
+	assigned := map[string]string{}
+	for _, s := range diagram.Statements {
+		switch v := s.(type) {
+		case *ast.Link:
+			links++
+		case *ast.NodeDef:
+			nodes = append(nodes, v.ID+"="+v.Label)
+		case *ast.ClassAssignment:
+			for _, id := range v.NodeIDs {
+				assigned[id] = v.ClassName
+			}
+		}
+	}
+
+	if links != 2 {
+		t.Errorf("got %d links, want 2 (a :::class must not drop the statement)", links)
+	}
+	// Bare and unlabeled node references (C, E) produce no NodeDef; only the
+	// labeled ones do.
+	wantNodes := []string{"A=Start", "B=End", `D="a:::b"`}
+	for _, want := range wantNodes {
+		if !slices.Contains(nodes, want) {
+			t.Errorf("missing node %q; got %v", want, nodes)
+		}
+	}
+	wantAssigned := map[string]string{"A": "hot", "C": "cold"}
+	if !maps.Equal(assigned, wantAssigned) {
+		t.Errorf("class assignments = %v, want %v", assigned, wantAssigned)
 	}
 }

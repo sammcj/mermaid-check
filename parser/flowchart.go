@@ -118,6 +118,11 @@ func (p *FlowchartParser) parseStatements(lines []string, startLine int, inSubgr
 			continue
 		}
 
+		// Peel any `id:::class` shorthand off the line before the node and link
+		// patterns see it; those patterns do not admit the suffix, and a line
+		// carrying one would otherwise match nothing and be dropped whole.
+		trimmed, inlineClasses := cutInlineClasses(trimmed, lineNum)
+
 		// Handle comments
 		if commentPattern.MatchString(trimmed) {
 			matches := commentPattern.FindStringSubmatch(trimmed)
@@ -218,6 +223,7 @@ func (p *FlowchartParser) parseStatements(lines []string, startLine int, inSubgr
 			// Clear pending nodes
 			p.pendingFromNode = nil
 			p.pendingToNode = nil
+			statements = append(statements, inlineClasses...)
 			continue
 		}
 
@@ -227,10 +233,13 @@ func (p *FlowchartParser) parseStatements(lines []string, startLine int, inSubgr
 				p.definedNodes[nodeDef.ID] = true
 			}
 			statements = append(statements, stmt)
+			statements = append(statements, inlineClasses...)
 			continue
 		}
 
 		// If we can't parse the line, skip it (for now - could return error in strict mode)
+		// A line that was nothing but `id:::class` still carries its assignment.
+		statements = append(statements, inlineClasses...)
 		continue
 	}
 
@@ -442,4 +451,91 @@ func (p *FlowchartParser) parseStyles(styleStr string) map[string]string {
 	}
 
 	return styles
+}
+
+// cutInlineClasses strips every `id:::class` shorthand from a flowchart line,
+// returning the cleaned line and the assignments it carried. Mermaid treats
+// `A:::hot` as exactly `class A hot`, so it is reported as a ClassAssignment
+// and every consumer that already handles `class` picks the shorthand up
+// unchanged. Only a suffix at bracket depth zero is taken, so a `:::` inside a
+// node label survives.
+func cutInlineClasses(line string, lineNum int) (string, []ast.Statement) {
+	var (
+		out    strings.Builder
+		stmts  []ast.Statement
+		depth  int
+		quoted bool
+	)
+	for i := 0; i < len(line); {
+		c := line[i]
+		switch {
+		case c == '"':
+			quoted = !quoted
+		case quoted:
+		case c == '[' || c == '(' || c == '{':
+			depth++
+		case c == ']' || c == ')' || c == '}':
+			depth--
+		case depth == 0 && strings.HasPrefix(line[i:], ":::"):
+			name := leadingIdent(line[i+3:])
+			id := trailingNodeID(out.String())
+			if name != "" && id != "" {
+				stmts = append(stmts, &ast.ClassAssignment{
+					NodeIDs:   []string{id},
+					ClassName: name,
+					Pos:       ast.Position{Line: lineNum, Column: 1},
+				})
+				i += 3 + len(name)
+				continue
+			}
+		}
+		out.WriteByte(c)
+		i++
+	}
+	return out.String(), stmts
+}
+
+// trailingNodeID reads the node id that the text ends on, stepping back over a
+// bracketed label first so `A[Start]` yields "A".
+func trailingNodeID(s string) string {
+	s = strings.TrimRight(s, " \t")
+	if s == "" {
+		return ""
+	}
+	if c := s[len(s)-1]; c == ']' || c == ')' || c == '}' {
+		i, depth := len(s)-1, 0
+	scan:
+		for ; i >= 0; i-- {
+			switch s[i] {
+			case ']', ')', '}':
+				depth++
+			case '[', '(', '{':
+				depth--
+				if depth == 0 {
+					break scan
+				}
+			}
+		}
+		if i < 0 {
+			return ""
+		}
+		s = s[:i]
+	}
+	end := len(s)
+	for end > 0 && isIdentByte(s[end-1]) {
+		end--
+	}
+	return s[end:]
+}
+
+func leadingIdent(s string) string {
+	i := 0
+	for i < len(s) && isIdentByte(s[i]) {
+		i++
+	}
+	return s[:i]
+}
+
+func isIdentByte(c byte) bool {
+	return c == '_' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9'
 }
