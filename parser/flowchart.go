@@ -119,11 +119,6 @@ func (p *FlowchartParser) parseStatements(lines []string, startLine int, inSubgr
 			continue
 		}
 
-		// Peel any `id:::class` shorthand off the line before the node and link
-		// patterns see it; those patterns do not admit the suffix, and a line
-		// carrying one would otherwise match nothing and be dropped whole.
-		trimmed, inlineClasses := cutInlineClasses(trimmed, lineNum)
-
 		// Handle comments
 		if commentPattern.MatchString(trimmed) {
 			matches := commentPattern.FindStringSubmatch(trimmed)
@@ -133,6 +128,11 @@ func (p *FlowchartParser) parseStatements(lines []string, startLine int, inSubgr
 			})
 			continue
 		}
+
+		// Peel any `id:::class` shorthand off the line before the node and link
+		// patterns see it; those patterns do not admit the suffix, and a line
+		// carrying one would otherwise match nothing and be dropped whole.
+		trimmed, inlineClasses := cutInlineClasses(trimmed, lineNum)
 
 		// Handle subgraph end
 		if subgraphEndPattern.MatchString(trimmed) {
@@ -469,13 +469,14 @@ func (p *FlowchartParser) parseStyles(styleStr string) map[string]string {
 // `A:::hot` as exactly `class A hot`, so it is reported as a ClassAssignment
 // and every consumer that already handles `class` picks the shorthand up
 // unchanged. Only a suffix at bracket depth zero is taken, so a `:::` inside a
-// node label survives.
+// node label or an edge label survives.
 func cutInlineClasses(line string, lineNum int) (string, []ast.Statement) {
 	var (
 		out    strings.Builder
 		stmts  []ast.Statement
 		depth  int
 		quoted bool
+		piped  bool
 	)
 	for i := 0; i < len(line); {
 		c := line[i]
@@ -483,6 +484,9 @@ func cutInlineClasses(line string, lineNum int) (string, []ast.Statement) {
 		case c == '"':
 			quoted = !quoted
 		case quoted:
+		case c == '|':
+			piped = !piped
+		case piped:
 		case c == '[' || c == '(' || c == '{':
 			depth++
 		case c == ']' || c == ')' || c == '}':

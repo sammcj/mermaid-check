@@ -192,3 +192,45 @@ func TestParseInlineClassShorthand(t *testing.T) {
 		t.Errorf("class assignments = %v, want %v", assigned, wantAssigned)
 	}
 }
+
+// A `:::` sequence that is part of prose or an edge label is not a class
+// shorthand: peeling it off would silently rewrite the diagram's text.
+func TestInlineClassShorthandLeavesTextAlone(t *testing.T) {
+	source := `flowchart LR
+    %% styling note: A:::hot is applied below
+    A -->|weight a:::b| B
+    A:::hot`
+
+	d, err := parser.NewFlowchartParser().Parse(source)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	var comments, labels []string
+	assigned := map[string]string{}
+	for _, s := range d.(*ast.Flowchart).Statements {
+		switch v := s.(type) {
+		case *ast.Comment:
+			comments = append(comments, v.Text)
+		case *ast.Link:
+			labels = append(labels, v.Label)
+		case *ast.ClassAssignment:
+			for _, id := range v.NodeIDs {
+				assigned[id] = v.ClassName
+			}
+		}
+	}
+
+	wantComments := []string{"styling note: A:::hot is applied below"}
+	if !slices.Equal(comments, wantComments) {
+		t.Errorf("comments = %v, want %v", comments, wantComments)
+	}
+	wantLabels := []string{"weight a:::b"}
+	if !slices.Equal(labels, wantLabels) {
+		t.Errorf("link labels = %v, want %v", labels, wantLabels)
+	}
+	wantAssigned := map[string]string{"A": "hot"}
+	if !maps.Equal(assigned, wantAssigned) {
+		t.Errorf("class assignments = %v, want %v", assigned, wantAssigned)
+	}
+}
