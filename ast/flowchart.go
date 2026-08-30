@@ -27,9 +27,9 @@ type Statement interface {
 
 // NodeDef represents a node definition.
 type NodeDef struct {
-	ID    string   // Node identifier
-	Shape string   // Shape type (bracket style)
-	Label string   // Node label/text
+	ID    string // Node identifier
+	Shape string // Shape type (bracket style)
+	Label string // Node label/text
 	Pos   Position
 }
 
@@ -40,12 +40,12 @@ func (n *NodeDef) GetPosition() Position { return n.Pos }
 
 // Link represents a link between nodes.
 type Link struct {
-	From      string   // Source node ID
-	To        string   // Target node ID
-	Arrow     string   // Arrow type (-->, -.>, ==>, etc.)
-	Label     string   // Link label (optional)
-	BiDir     bool     // Bidirectional arrow
-	Pos       Position
+	From  string // Source node ID
+	To    string // Target node ID
+	Arrow string // Arrow type (-->, -.>, ==>, etc.)
+	Label string // Link label (optional)
+	BiDir bool   // Bidirectional arrow
+	Pos   Position
 }
 
 func (l *Link) statement() {}
@@ -89,6 +89,19 @@ func (c *ClassAssignment) statement() {}
 
 // GetPosition returns the position of this class assignment in the source.
 func (c *ClassAssignment) GetPosition() Position { return c.Pos }
+
+// Style represents a `style <target> <properties>` statement, which applies CSS
+// properties to one node or edge directly rather than through a class.
+type Style struct {
+	Target string            // Node or edge the properties apply to
+	Styles map[string]string // CSS properties
+	Pos    Position
+}
+
+func (s *Style) statement() {}
+
+// GetPosition returns the position of this style statement in the source.
+func (s *Style) GetPosition() Position { return s.Pos }
 
 // Comment represents a comment line.
 type Comment struct {

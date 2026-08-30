@@ -1,6 +1,7 @@
 package parser_test
 
 import (
+	"maps"
 	"os"
 	"path/filepath"
 	"testing"
@@ -115,5 +116,33 @@ func TestParseSubgraphTitle(t *testing.T) {
 				t.Errorf("subgraph id = %q, want %q", sg.ID, tt.wantID)
 			}
 		})
+	}
+}
+
+func TestParseStyleStatement(t *testing.T) {
+	source := `flowchart LR
+    A --> B
+    style A fill:#f9f,stroke:#333,stroke-width:2px`
+
+	d, err := parser.NewFlowchartParser().Parse(source)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	var got *ast.Style
+	for _, s := range d.(*ast.Flowchart).Statements {
+		if st, ok := s.(*ast.Style); ok {
+			got = st
+		}
+	}
+	if got == nil {
+		t.Fatal("no *ast.Style statement produced")
+	}
+	if got.Target != "A" {
+		t.Errorf("Target = %q, want %q", got.Target, "A")
+	}
+	want := map[string]string{"fill": "#f9f", "stroke": "#333", "stroke-width": "2px"}
+	if !maps.Equal(got.Styles, want) {
+		t.Errorf("Styles = %v, want %v", got.Styles, want)
 	}
 }

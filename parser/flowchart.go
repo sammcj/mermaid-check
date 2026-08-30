@@ -17,6 +17,7 @@ var (
 	subgraphEndPattern   = regexp.MustCompile(`^\s*end\s*$`)
 	classDefPattern      = regexp.MustCompile(`^\s*classDef\s+(\w+)\s+(.+)$`)
 	classAssignPattern   = regexp.MustCompile(`^\s*class\s+([\w,\s]+?)\s+(\w+)\s*$`)
+	stylePattern         = regexp.MustCompile(`^\s*style\s+(\w+)\s+(.+)$`)
 
 	// Node and link patterns
 	// NOTE: Order matters in alternation - longer patterns must come before shorter ones
@@ -183,6 +184,16 @@ func (p *FlowchartParser) parseStatements(lines []string, startLine int, inSubgr
 			statements = append(statements, &ast.ClassDef{
 				Name:   matches[1],
 				Styles: styles,
+				Pos:    ast.Position{Line: lineNum, Column: 1},
+			})
+			continue
+		}
+
+		// Handle style
+		if matches := stylePattern.FindStringSubmatch(trimmed); matches != nil {
+			statements = append(statements, &ast.Style{
+				Target: matches[1],
+				Styles: p.parseStyles(matches[2]),
 				Pos:    ast.Position{Line: lineNum, Column: 1},
 			})
 			continue
