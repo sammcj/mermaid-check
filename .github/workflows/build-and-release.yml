@@ -361,7 +361,7 @@ jobs:
           # messages are untrusted input.
           BUMP_CHANGELOG: ${{ needs.bump-version.outputs.changelog }}
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" && -n "$BUMP_CHANGELOG" ]]; then
+          if [[ "$GITHUB_REF" == "refs/heads/main" && -n "$BUMP_CHANGELOG" ]]; then
             # If this is a main branch build with a changelog from bump-version job
             CHANGELOG="$BUMP_CHANGELOG"
           else
@@ -374,13 +374,18 @@ jobs:
               CHANGELOG=$(git log --pretty=format:"* %s (%h)" --no-merges)
             else
               # Get commits between the previous tag and this one
-              CHANGELOG=$(git log --pretty=format:"* %s (%h)" --no-merges ${PREVIOUS_TAG}..HEAD)
+              CHANGELOG=$(git log --pretty=format:"* %s (%h)" --no-merges "${PREVIOUS_TAG}..HEAD")
             fi
           fi
 
-          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
-          echo "$CHANGELOG" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          # Random delimiter: the changelog carries commit messages, so a fixed
+          # one could be closed early by a commit containing that line.
+          DELIMITER="CHANGELOG_EOF_$(openssl rand -hex 16)"
+          {
+            echo "content<<$DELIMITER"
+            echo "$CHANGELOG"
+            echo "$DELIMITER"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Prepare file list and platform docs
         id: file_list
@@ -408,7 +413,7 @@ jobs:
           body: |
             ## Changes in this Release
 
-            ${{ env.CHANGELOG }}
+            ${{ steps.changelog.outputs.content }}
 
             ## Installation
 
