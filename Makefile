@@ -46,7 +46,7 @@ deps: ## Update all dependencies and verify module dependencies
 	@go mod verify
 
 changelog: ## Preview the next version and release notes CI would generate
-	@command -v git-cliff >/dev/null || { echo "git-cliff not installed: brew install git-cliff"; exit 1; }
+	@command -v git-cliff >/dev/null || { echo "git-cliff not installed, see https://git-cliff.org/docs/installation (e.g. brew install git-cliff)"; exit 1; }
 	@echo "Next version: $$(git cliff --bumped-version)"
 	@echo ""
 	@git cliff --unreleased --bump

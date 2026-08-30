@@ -26,7 +26,10 @@ filter_unconventional = true
 split_commits = false
 protect_breaking_commits = true
 filter_commits = true
-tag_pattern = "v[0-9]*"
+# Regex (not a glob), matched against tag names. Anchored at the start so a
+# tag like "release-v1" is not mistaken for a release; left open at the end so
+# pre-release suffixes such as v1.2.3-rc1 still match.
+tag_pattern = "^v[0-9]+\\.[0-9]+\\.[0-9]+"
 topo_order = false
 sort_commits = "oldest"
 
