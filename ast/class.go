@@ -45,6 +45,7 @@ type Relationship struct {
 	From             string // Source class name
 	To               string // Target class name
 	Type             string // Relationship type (inheritance, composition, aggregation, association, dependency, realization)
+	Operator         string // Relationship operator as written, e.g. "<|--", "--|>", "*--", "-->", "--"
 	Label            string // Optional relationship label
 	FromMultiplicity string // Multiplicity on source end
 	ToMultiplicity   string // Multiplicity on target end

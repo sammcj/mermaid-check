@@ -1,6 +1,7 @@
 package parser_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -107,20 +108,61 @@ func TestClassParser_Relationships(t *testing.T) {
 		}
 	}
 	want := []ast.Relationship{
-		{From: "Animal", To: "Dog", Type: "inheritance"},
-		{From: "Duck", To: "Flyer", Type: "realization"},
-		{From: "Car", To: "Wheel", Type: "composition"},
-		{From: "House", To: "Room", Type: "aggregation"},
-		{From: "A", To: "B", Type: "association"},
-		{From: "X", To: "Y", Type: "dependency"},
+		{From: "Animal", To: "Dog", Type: "inheritance", Operator: "<|--"},
+		{From: "Duck", To: "Flyer", Type: "realization", Operator: "..|>"},
+		{From: "Car", To: "Wheel", Type: "composition", Operator: "*--"},
+		{From: "House", To: "Room", Type: "aggregation", Operator: "o--"},
+		{From: "A", To: "B", Type: "association", Operator: "-->"},
+		{From: "X", To: "Y", Type: "dependency", Operator: "..>"},
 	}
 	if len(rels) != len(want) {
 		t.Fatalf("got %d relationships, want %d: %+v", len(rels), len(want), rels)
 	}
 	for i, w := range want {
 		g := rels[i]
-		if g.From != w.From || g.To != w.To || g.Type != w.Type {
-			t.Errorf("rel %d = {From:%q To:%q Type:%q}, want {From:%q To:%q Type:%q}", i, g.From, g.To, g.Type, w.From, w.To, w.Type)
+		if g.From != w.From || g.To != w.To || g.Type != w.Type || g.Operator != w.Operator {
+			t.Errorf("rel %d = {From:%q To:%q Type:%q Operator:%q}, want {From:%q To:%q Type:%q Operator:%q}", i, g.From, g.To, g.Type, g.Operator, w.From, w.To, w.Type, w.Operator)
+		}
+	}
+}
+
+// TestClassParser_RelationshipOperator covers the spellings that share a Type.
+func TestClassParser_RelationshipOperator(t *testing.T) {
+	want := []string{
+		"<|--", "--|>", // inheritance
+		"<|..", "..|>", // realization
+		"*--", "--*", // composition
+		"o--", "--o", // aggregation
+		"-->", "<--", "--", "<-->", // association
+		"..>", "<..", "..", // dependency
+	}
+
+	var src strings.Builder
+	src.WriteString("classDiagram\n")
+	for i, op := range want {
+		fmt.Fprintf(&src, "    A%d %s B%d\n", i, op, i)
+	}
+
+	d, err := parser.NewClassParser().Parse(src.String())
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+	cd, ok := d.(*ast.ClassDiagram)
+	if !ok {
+		t.Fatalf("Parse() = %T, want *ast.ClassDiagram", d)
+	}
+	var got []string
+	for _, s := range cd.Statements {
+		if r, ok := s.(*ast.Relationship); ok {
+			got = append(got, r.Operator)
+		}
+	}
+	if len(got) != len(want) {
+		t.Fatalf("got %d relationships, want %d: %q", len(got), len(want), got)
+	}
+	for i, w := range want {
+		if got[i] != w {
+			t.Errorf("rel %d Operator = %q, want %q", i, got[i], w)
 		}
 	}
 }
