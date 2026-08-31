@@ -359,13 +359,15 @@ func TestParseQuotedLabels(t *testing.T) {
 	}
 }
 
-// A lone quote is part of the label, not a delimiter to strip.
+// A lone quote is part of the label, not a delimiter to strip — including at
+// the very end, where a cutset trim would eat it but a matched pair does not
+// apply.
 func TestParseUnmatchedQuoteInLabel(t *testing.T) {
-	d, err := parser.NewFlowchartParser().Parse("flowchart TD\n    A[6\" pipe]")
+	d, err := parser.NewFlowchartParser().Parse("flowchart TD\n    A[pipe 6\"]")
 	if err != nil {
 		t.Fatalf("failed to parse: %v", err)
 	}
-var node *ast.NodeDef
+	var node *ast.NodeDef
 	for _, s := range d.(*ast.Flowchart).Statements {
 		if n, ok := s.(*ast.NodeDef); ok && n.ID == "A" {
 			node = n
@@ -375,7 +377,7 @@ var node *ast.NodeDef
 	if node == nil {
 		t.Fatal("no node definition found for A")
 	}
-	if node.Label != `6" pipe` {
-		t.Errorf("label = %q, want %q", node.Label, `6" pipe`)
+	if node.Label != `pipe 6"` {
+		t.Errorf("label = %q, want %q", node.Label, `pipe 6"`)
 	}
 }
