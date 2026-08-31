@@ -181,7 +181,7 @@ func TestParseInlineClassShorthand(t *testing.T) {
 	}
 	// Bare and unlabeled node references (C, E) produce no NodeDef; only the
 	// labeled ones do.
-	wantNodes := []string{"A=Start", "B=End", `D="a:::b"`}
+	wantNodes := []string{"A=Start", "B=End", "D=a:::b"}
 	for _, want := range wantNodes {
 		if !slices.Contains(nodes, want) {
 			t.Errorf("missing node %q; got %v", want, nodes)
@@ -306,5 +306,78 @@ func TestParseInlineClassEdgeCases(t *testing.T) {
 				t.Errorf("class assignments = %v, want %v", assigned, tt.assigned)
 			}
 		})
+	}
+}
+
+// TestParseQuotedLabels covers the quoting Mermaid uses for labels carrying
+// spaces or reserved characters: the quotes are syntax, so they do not reach
+// the AST.
+func TestParseQuotedLabels(t *testing.T) {
+	source := `flowchart TD
+    A["Node label"]
+    B[Plain]
+    A -->|"edge label"| B
+    subgraph sg["Sub title"]
+        C["50% done"]
+    end`
+
+	d, err := parser.NewFlowchartParser().Parse(source)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	labels := map[string]string{}
+	var edgeLabels []string
+	var titles []string
+	var walk func(stmts []ast.Statement)
+	walk = func(stmts []ast.Statement) {
+		for _, s := range stmts {
+			switch v := s.(type) {
+			case *ast.NodeDef:
+				labels[v.ID] = v.Label
+			case *ast.Link:
+				if v.Label != "" {
+					edgeLabels = append(edgeLabels, v.Label)
+				}
+			case *ast.Subgraph:
+				titles = append(titles, v.Title)
+				walk(v.Statements)
+			}
+		}
+	}
+	walk(d.(*ast.Flowchart).Statements)
+
+	wantLabels := map[string]string{"A": "Node label", "B": "Plain", "C": "50% done"}
+	if !maps.Equal(labels, wantLabels) {
+		t.Errorf("node labels = %v, want %v", labels, wantLabels)
+	}
+	if want := []string{"edge label"}; !slices.Equal(edgeLabels, want) {
+		t.Errorf("edge labels = %v, want %v", edgeLabels, want)
+	}
+	if want := []string{"Sub title"}; !slices.Equal(titles, want) {
+		t.Errorf("subgraph titles = %v, want %v", titles, want)
+	}
+}
+
+// A lone quote is part of the label, not a delimiter to strip — including at
+// the very end, where a cutset trim would eat it but a matched pair does not
+// apply.
+func TestParseUnmatchedQuoteInLabel(t *testing.T) {
+	d, err := parser.NewFlowchartParser().Parse("flowchart TD\n    A[pipe 6\"]")
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+	var node *ast.NodeDef
+	for _, s := range d.(*ast.Flowchart).Statements {
+		if n, ok := s.(*ast.NodeDef); ok && n.ID == "A" {
+			node = n
+			break
+		}
+	}
+	if node == nil {
+		t.Fatal("no node definition found for A")
+	}
+	if node.Label != `pipe 6"` {
+		t.Errorf("label = %q, want %q", node.Label, `pipe 6"`)
 	}
 }

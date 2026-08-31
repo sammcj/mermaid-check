@@ -163,7 +163,7 @@ func (p *FlowchartParser) parseStatements(lines []string, startLine int, inSubgr
 			switch {
 			case matches[2] != "":
 				id = matches[1]
-				title = strings.Trim(matches[2], `"`)
+				title = unquoteLabel(matches[2])
 			case matches[3] != "":
 				id = matches[3]
 				title = matches[3]
@@ -300,7 +300,7 @@ func (p *FlowchartParser) extractNodeDef(nodeID, openBracket, label, closeBracke
 	return &ast.NodeDef{
 		ID:    nodeID,
 		Shape: openBracket + closeBracket,
-		Label: strings.TrimSpace(label),
+		Label: unquoteLabel(label),
 		Pos:   ast.Position{Line: lineNum, Column: 1},
 	}
 }
@@ -346,7 +346,7 @@ func (p *FlowchartParser) parseLink(line string, lineNum int) ast.Statement {
 
 		label := ""
 		if len(matches) > 9 && matches[9] != "" {
-			label = strings.TrimSpace(matches[9])
+			label = unquoteLabel(matches[9])
 		}
 
 		return &ast.Link{
@@ -403,7 +403,7 @@ func (p *FlowchartParser) parseLink(line string, lineNum int) ast.Statement {
 
 		label := ""
 		if len(matches) > 9 && matches[9] != "" {
-			label = strings.TrimSpace(matches[9])
+			label = unquoteLabel(matches[9])
 		}
 
 		return &ast.Link{
@@ -436,7 +436,7 @@ func (p *FlowchartParser) parseNodeDef(line string, lineNum int) ast.Statement {
 			shape += matches[4]
 		}
 		if len(matches) > 3 {
-			label = strings.TrimSpace(matches[3])
+			label = unquoteLabel(matches[3])
 		}
 	}
 
@@ -512,6 +512,18 @@ func cutInlineClasses(line string, lineNum int) (string, []ast.Statement) {
 		i++
 	}
 	return out.String(), stmts
+}
+
+// unquoteLabel trims a label and drops one matched pair of surrounding double
+// quotes. In Mermaid the quotes in `A["Start"]` are syntax — how a label
+// carrying spaces or reserved characters is written — not part of the label.
+// Only a matched pair is removed, so a lone quote in the text survives.
+func unquoteLabel(s string) string {
+	s = strings.TrimSpace(s)
+	if len(s) >= 2 && strings.HasPrefix(s, `"`) && strings.HasSuffix(s, `"`) {
+		return s[1 : len(s)-1]
+	}
+	return s
 }
 
 // trailingNodeID reads the node id that the text ends on, stepping back over a
