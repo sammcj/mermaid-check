@@ -365,11 +365,17 @@ func TestParseUnmatchedQuoteInLabel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to parse: %v", err)
 	}
+var node *ast.NodeDef
 	for _, s := range d.(*ast.Flowchart).Statements {
-		if n, ok := s.(*ast.NodeDef); ok {
-			if n.Label != `6" pipe` {
-				t.Errorf("label = %q, want %q", n.Label, `6" pipe`)
-			}
+		if n, ok := s.(*ast.NodeDef); ok && n.ID == "A" {
+			node = n
+			break
 		}
+	}
+	if node == nil {
+		t.Fatal("no node definition found for A")
+	}
+	if node.Label != `6" pipe` {
+		t.Errorf("label = %q, want %q", node.Label, `6" pipe`)
 	}
 }
