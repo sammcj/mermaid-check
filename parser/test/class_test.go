@@ -1,6 +1,7 @@
 package parser_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -127,23 +128,22 @@ func TestClassParser_Relationships(t *testing.T) {
 
 // TestClassParser_RelationshipOperator covers the spellings that share a Type.
 func TestClassParser_RelationshipOperator(t *testing.T) {
-	src := "classDiagram\n" +
-		"    A <|-- B\n" +
-		"    C --|> D\n" +
-		"    E *-- F\n" +
-		"    G --* H\n" +
-		"    I o-- J\n" +
-		"    K --o L\n" +
-		"    M --> N\n" +
-		"    O <-- P\n" +
-		"    Q -- R\n" +
-		"    S <--> T\n" +
-		"    U ..> V\n" +
-		"    W <.. X\n" +
-		"    Y .. Z"
-	want := []string{"<|--", "--|>", "*--", "--*", "o--", "--o", "-->", "<--", "--", "<-->", "..>", "<..", ".."}
+	want := []string{
+		"<|--", "--|>", // inheritance
+		"<|..", "..|>", // realization
+		"*--", "--*", // composition
+		"o--", "--o", // aggregation
+		"-->", "<--", "--", "<-->", // association
+		"..>", "<..", "..", // dependency
+	}
 
-	d, err := parser.NewClassParser().Parse(src)
+	var src strings.Builder
+	src.WriteString("classDiagram\n")
+	for i, op := range want {
+		fmt.Fprintf(&src, "    A%d %s B%d\n", i, op, i)
+	}
+
+	d, err := parser.NewClassParser().Parse(src.String())
 	if err != nil {
 		t.Fatalf("Parse() error: %v", err)
 	}
