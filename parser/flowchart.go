@@ -519,26 +519,76 @@ func cutInlineClasses(line string, lineNum int) (string, []ast.Statement) {
 	return out.String(), stmts
 }
 
-// linkLabelBrackets are read by mermaid as node-shape delimiters inside an
-// unquoted |...| link label.
-const linkLabelBrackets = "()[]{}"
+// linkLabelForbidden are refused by mermaid in a |...| link label outside its
+// leading quoted string: brackets open node shapes, and a quote would start a
+// second string, which the grammar only allows first.
+const linkLabelForbidden = `()[]{}"`
 
-// checkLinkLabel returns an error if line is a link whose |...| label is
-// unquoted and holds one of linkLabelBrackets.
+// linkLabelStart matches a link arrow followed by the opening pipe of a |...|
+// label, anchored at the scan position.
+var linkLabelStart = regexp.MustCompile(`^(?:-{2,}|={2,}|-\.+-)[>xo]?\s*\|`)
+
+// checkLinkLabel returns an error if any |...| link label on line holds text
+// mermaid cannot parse. It scans the line itself instead of reusing
+// linkPattern, which misses lines ending in ';', chained links and endpoint
+// labels holding ')'. Arrows inside quotes or node-label brackets are skipped.
 func checkLinkLabel(line string, lineNum int) error {
-	for _, pat := range []*regexp.Regexp{biDirLinkPattern, linkPattern} {
-		m := pat.FindStringSubmatch(line)
-		if m == nil || m[9] == "" {
-			continue
+	depth, inQuote := 0, false
+	for i := 0; i < len(line); i++ {
+		c := line[i]
+		switch {
+		case c == '"':
+			inQuote = !inQuote
+		case inQuote:
+		case strings.IndexByte("([{", c) >= 0:
+			depth++
+		case strings.IndexByte(")]}", c) >= 0:
+			depth = max(depth-1, 0)
+		case depth == 0:
+			m := linkLabelStart.FindStringIndex(line[i:])
+			if m == nil {
+				continue
+			}
+			label, end := cutPipeLabel(line[i+m[1]:])
+			if err := validateLinkLabel(label, lineNum); err != nil {
+				return err
+			}
+			i += m[1] + end
 		}
-		raw := strings.TrimSpace(m[9])
-		if len(raw) >= 2 && strings.HasPrefix(raw, `"`) && strings.HasSuffix(raw, `"`) {
-			return nil
+	}
+	return nil
+}
+
+// cutPipeLabel returns the label text before the closing pipe in s and the
+// index of that pipe, ignoring pipes inside quotes. An unclosed label runs to
+// the end of s.
+func cutPipeLabel(s string) (string, int) {
+	inQuote := false
+	for j := 0; j < len(s); j++ {
+		switch s[j] {
+		case '"':
+			inQuote = !inQuote
+		case '|':
+			if !inQuote {
+				return s[:j], j
+			}
 		}
-		if i := strings.IndexAny(raw, linkLabelBrackets); i >= 0 {
-			return fmt.Errorf("line %d: link label |%s| holds an unquoted %q, which mermaid refuses; quote it: |\"%s\"|", lineNum, raw, raw[i], raw)
+	}
+	return s, len(s)
+}
+
+// validateLinkLabel applies mermaid's edge text grammar: an optional leading
+// quoted string followed by plain text free of linkLabelForbidden.
+func validateLinkLabel(raw string, lineNum int) error {
+	label := strings.TrimSpace(raw)
+	rest := label
+	if strings.HasPrefix(rest, `"`) {
+		if j := strings.IndexByte(rest[1:], '"'); j >= 0 {
+			rest = rest[j+2:]
 		}
-		return nil
+	}
+	if i := strings.IndexAny(rest, linkLabelForbidden); i >= 0 {
+		return fmt.Errorf("line %d: link label |%s| holds %q outside quotes, which mermaid refuses; put the whole label in one pair of double quotes", lineNum, label, rest[i])
 	}
 	return nil
 }
