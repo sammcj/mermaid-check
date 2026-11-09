@@ -218,6 +218,11 @@ func (p *FlowchartParser) parseStatements(lines []string, startLine int, inSubgr
 			continue
 		}
 
+		// Reject link labels mermaid cannot parse
+		if err := checkLinkLabel(trimmed, lineNum); err != nil {
+			return nil, err
+		}
+
 		// Try to parse as link (bidirectional or unidirectional)
 		if stmt := p.parseLink(trimmed, lineNum); stmt != nil {
 			// Insert inline NodeDefs in the correct order:
@@ -512,6 +517,30 @@ func cutInlineClasses(line string, lineNum int) (string, []ast.Statement) {
 		i++
 	}
 	return out.String(), stmts
+}
+
+// linkLabelBrackets are read by mermaid as node-shape delimiters inside an
+// unquoted |...| link label.
+const linkLabelBrackets = "()[]{}"
+
+// checkLinkLabel returns an error if line is a link whose |...| label is
+// unquoted and holds one of linkLabelBrackets.
+func checkLinkLabel(line string, lineNum int) error {
+	for _, pat := range []*regexp.Regexp{biDirLinkPattern, linkPattern} {
+		m := pat.FindStringSubmatch(line)
+		if m == nil || m[9] == "" {
+			continue
+		}
+		raw := strings.TrimSpace(m[9])
+		if len(raw) >= 2 && strings.HasPrefix(raw, `"`) && strings.HasSuffix(raw, `"`) {
+			return nil
+		}
+		if i := strings.IndexAny(raw, linkLabelBrackets); i >= 0 {
+			return fmt.Errorf("line %d: link label |%s| holds an unquoted %q, which mermaid refuses; quote it: |\"%s\"|", lineNum, raw, raw[i], raw)
+		}
+		return nil
+	}
+	return nil
 }
 
 // unquoteLabel trims a label and drops one matched pair of surrounding double
